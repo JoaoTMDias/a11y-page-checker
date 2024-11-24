@@ -1,0 +1,18 @@
+{{!-- summary.hbs --}}
+<aside class="summary">
+    <h2 class="summary__title">Summary</h2>
+    <dl class="summary__list">
+        <div class="summary__item" data-first>
+            <dt>Total issues</dt>
+            <dd><sl-badge variant="neutral" pill="">{{summary.totalViolations}}</sl-badge></dd>
+        </div>
+        <div class="summary__item">
+            <dt>Pages with violations</dt>
+            <dd><sl-badge variant="neutral" pill="">{{summary.pagesWithViolations}}</sl-badge></dd>
+        </div>
+        <div class="summary__item">
+            <dt>Total of pages</dt>
+            <dd><sl-badge variant="neutral" pill="">{{summary.totalPages}}</sl-badge></dd>
+        </div>
+    </dl>
+</aside>

@@ -1,0 +1,52 @@
+{
+  "name": "@jtmdias/a11y-site-checker",
+  "version": "0.0.0",
+  "description": "A tool to crawl sitemaps and perform accessibility testing",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint src --ext .ts",
+    "prepare": "npm run build",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "TEST_SITE_URL=https://example.com vitest integration"
+  },
+  "keywords": [
+    "accessibility",
+    "sitemap",
+    "crawler",
+    "axe-core",
+    "playwright",
+    "a11y"
+  ],
+  "devDependencies": {
+    "@feedzai/js-utilities": "^1.6.0",
+    "@playwright/test": "^1.48.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^22.9.0",
+    "@types/xml2js": "^0.4.14",
+    "@vitest/coverage-v8": "^2.1.4",
+    "path": "^0.12.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vite-plugin-dts": "^4.3.0",
+    "vite-tsconfig-paths": "^5.1.2",
+    "vitest": "^2.1.4"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "axios": "^1.7.7",
+    "handlebars": "^4.7.8",
+    "xml2js": "^0.6.2"
+  }
+}

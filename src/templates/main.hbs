@@ -1,0 +1,40 @@
+{{!-- main.hbs --}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Accessibility Test Results</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.18.0/cdn/components/badge/badge.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.18.0/cdn/components/tag/tag.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.18.0/cdn/components/card/card.js"></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.18.0/cdn/components/details/details.js"
+    ></script>
+    <style>
+        {{> styles}}
+    </style>
+</head>
+<body class="layout">
+    <header class="header">
+        <span class="header__title__package" aria-label="Accessibility Page Checker">a11y page checker</span>
+        <h1 class="header__title">
+            <span class="header__title__name">Accessibility Test Results</span>
+        </h1>
+        <time class="header__title__date">
+            <span class="sr-only">Test conducted on</span>{{testDate}}
+        </time>
+    </header>
+    <main class="container">
+        {{> summary}}
+        <div class="report">
+            <section>
+                <h2 class="report__title">Results</h2>
+                {{> violations}}
+            </section>
+        </div>
+    </main>
+</body>
+</html>
