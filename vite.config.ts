@@ -1,10 +1,17 @@
 /// <reference types="vitest/globals" />
-import { resolve } from "path";
+import { resolve } from "node:path";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import terser from "@rollup/plugin-terser";
+import PackageJSON from "./package.json";
+
+const { dependencies = {}, devDependencies = {} } = PackageJSON;
+const EXTERNAL_DEPENDENCIES = Object.keys({
+  ...dependencies,
+  ...devDependencies,
+});
 
 type ModuleFormat =
   | "amd"
@@ -43,14 +50,7 @@ const CONFIG: UserConfig = {
   build: {
     rollupOptions: {
       plugins: [terser()],
-      external: [
-        "fs/promises",
-        "path",
-        "axios",
-        "xml2js",
-        "@playwright/test",
-        "@axe-core/playwright",
-      ],
+      external: EXTERNAL_DEPENDENCIES,
       output: {
         // Global variables for UMD build
         globals: {
@@ -59,6 +59,7 @@ const CONFIG: UserConfig = {
           xml2js: "xml2js",
           "@playwright/test": "playwright",
           "@axe-core/playwright": "AxeBuilder",
+          handlebars: "handlebars",
         },
       },
     },

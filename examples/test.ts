@@ -1,6 +1,6 @@
-import path from "path";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { AccessibilityTester, ReportGenerator, SitemapCrawler } from "../src/index";
-import { fileURLToPath } from "url";
 
 const URL = "https://www.feedzai.com/page-sitemap.xml";
 const CRAWLER = new SitemapCrawler();

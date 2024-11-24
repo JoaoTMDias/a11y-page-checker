@@ -2,7 +2,7 @@ import { describe, test, expect } from "vitest";
 import { SitemapCrawler } from "../src/crawler";
 import { AccessibilityTester } from "../src/tester";
 import { ReportGenerator } from "../src/reporter";
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 import path from "path";
 
 describe("Full Integration Test", () => {

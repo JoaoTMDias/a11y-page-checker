@@ -1,17 +1,11 @@
 import Handlebars from "handlebars";
 import { TestResults } from "./types";
-import { capitalize } from "@feedzai/js-utilities";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
-
-// Register helpers
-Handlebars.registerHelper("capitalize", function (str) {
-  return capitalize(str);
-});
 
 Handlebars.registerHelper("escapeHtml", function (unsafe: string) {
   return new Handlebars.SafeString(
