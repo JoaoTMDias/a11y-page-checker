@@ -2,7 +2,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { chromium, Page, Browser } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { AccessibilityTester } from "../src/tester";
+import { AccessibilityTester } from "../src";
 
 // Fix the chromium mock to include the correct type
 vi.mock("@playwright/test", () => ({

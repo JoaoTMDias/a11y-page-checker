@@ -1,7 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { SitemapCrawler } from "../src/crawler";
-import { AccessibilityTester } from "../src/tester";
-import { ReportGenerator } from "../src/reporter";
+import { SitemapCrawler, AccessibilityTester, ReportGenerator } from "../src";
 import fs from "node:fs/promises";
 import path from "path";
 
@@ -23,7 +21,7 @@ describe("Full Integration Test", () => {
         maxRetries: 2,
       });
 
-      const pages = await crawler.crawlSitemaps({
+      const pages = await crawler.getSitemaps({
         test: `${testUrl}/sitemap.xml`,
       });
 

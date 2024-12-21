@@ -46,3 +46,49 @@ export interface TestResults {
   summary: TestResultsSummary;
   violations: TestResultsViolation[];
 }
+
+export interface AxeConfig {
+  rules?: string[];
+  tags?: string[];
+}
+
+export interface OutputConfig {
+  formats: ("json" | "html" | "table")[];
+  directory: string;
+}
+
+export interface A11yConfig {
+  sitemaps: Record<string, string>;
+  axe?: AxeConfig;
+  output: OutputConfig;
+  crawler?: SitemapConfig;
+  tester?: SitemapConfig;
+}
+
+export interface ParsedCrawledResult {
+  urlset: Urlset;
+}
+
+export interface Urlset {
+  $: Empty;
+  url: SitemapURL[];
+}
+
+export interface Empty {
+  "xmlns:xsi": string;
+  "xmlns:image": string;
+  "xsi:schemaLocation": string;
+  xmlns: string;
+}
+
+export interface SitemapURL {
+  loc: string[];
+  lastmod: Date[];
+  "image:image"?: ImageImage[];
+  changefreq?: string[];
+  priority?: string[];
+}
+
+export interface ImageImage {
+  "image:loc": string[];
+}

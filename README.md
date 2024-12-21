@@ -1,2 +1,3 @@
 # a11y-page-checker
-A tool to crawl sitemaps and perform accessibility testing
+
+A tool perform accessibility testing and reports

@@ -1,9 +1,6 @@
 // tests/crawler.test.ts
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import axios from "axios";
-import { SitemapCrawler } from "../src/crawler";
-
-vi.mock("axios");
+import { SitemapCrawler } from "../src";
 
 describe("SitemapCrawler", () => {
   beforeEach(() => {
@@ -31,7 +28,7 @@ describe("SitemapCrawler", () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -68,7 +65,7 @@ describe("SitemapCrawler", () => {
       .mockResolvedValueOnce({ data: mockSitemapXml2 });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
       blog: "https://example.com/blog-sitemap.xml",
     });
@@ -86,7 +83,7 @@ describe("SitemapCrawler", () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ data: mockEmptySitemap });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -105,7 +102,7 @@ describe("SitemapCrawler", () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -137,7 +134,7 @@ describe("SitemapCrawler", () => {
       waitForTimeout: 5000,
     });
 
-    const crawlPromise = crawler.crawlSitemaps({
+    const crawlPromise = crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -161,7 +158,7 @@ describe("SitemapCrawler", () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -189,7 +186,7 @@ describe("SitemapCrawler", () => {
     const customTimeout = 15000;
     const crawler = new SitemapCrawler({ timeout: customTimeout });
 
-    await crawler.crawlSitemaps({
+    await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -211,7 +208,7 @@ describe("SitemapCrawler", () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
 
     const crawler = new SitemapCrawler();
-    const results = await crawler.crawlSitemaps({
+    const results = await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
@@ -227,7 +224,7 @@ describe("SitemapCrawler", () => {
       waitForTimeout: 1000,
     });
 
-    const crawlPromise = crawler.crawlSitemaps({
+    const crawlPromise = crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 

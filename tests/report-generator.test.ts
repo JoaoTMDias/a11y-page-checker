@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import fs from "node:fs/promises";
-import { ReportGenerator } from "../src/reporter";
+import { ReportGenerator } from "../src";
+import { TestResults } from "../src/types";
 
 vi.mock("node:fs/promises");
 
@@ -10,7 +11,7 @@ describe("ReportGenerator", () => {
   });
 
   test("should generate both reports", async () => {
-    const mockResults = {
+    const mockResults: TestResults = {
       summary: {
         totalPages: 1,
         pagesWithViolations: 1,

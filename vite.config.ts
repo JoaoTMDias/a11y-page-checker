@@ -8,6 +8,7 @@ import terser from "@rollup/plugin-terser";
 import PackageJSON from "./package.json";
 
 const { dependencies = {}, devDependencies = {} } = PackageJSON;
+
 const EXTERNAL_DEPENDENCIES = Object.keys({
   ...dependencies,
   ...devDependencies,
@@ -25,19 +26,13 @@ type ModuleFormat =
   | "module"
   | "systemjs";
 
-/**
- * Gets a per-file format filename.
- *
- * @param format
- * @returns
- */
 function getFilename(format: ModuleFormat, entryName: string) {
   const OUTPUT: Partial<Record<typeof format, string>> = {
     es: `${entryName}.mjs`,
-    cjs: `${entryName}.cjs`,
+    cjs: `${entryName}.js`, // Changed to .js for CLI compatibility
   };
 
-  return OUTPUT[format] ?? `${entryName}.cjs`;
+  return OUTPUT[format] ?? `${entryName}.js`; // Changed to .js
 }
 
 const CONFIG: UserConfig = {
@@ -51,23 +46,13 @@ const CONFIG: UserConfig = {
     rollupOptions: {
       plugins: [terser()],
       external: EXTERNAL_DEPENDENCIES,
-      output: {
-        // Global variables for UMD build
-        globals: {
-          path: "path",
-          axios: "axios",
-          xml2js: "xml2js",
-          "@playwright/test": "playwright",
-          "@axe-core/playwright": "AxeBuilder",
-          handlebars: "handlebars",
-        },
-      },
     },
     minify: "esbuild",
     target: "esnext",
     lib: {
       entry: {
         index: resolve(__dirname, "src/index.ts"),
+        "cli/commands": resolve(__dirname, "src/commands/index.ts"),
       },
       name: "A11ySiteChecker",
       formats: ["es", "cjs"],
@@ -85,5 +70,4 @@ const CONFIG: UserConfig = {
   },
 };
 
-// https://vitejs.dev/config/
 export default defineConfig(CONFIG);

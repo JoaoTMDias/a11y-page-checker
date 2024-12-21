@@ -1,0 +1,28 @@
+sitemaps:
+  main: https://example.com/sitemap.xml
+  blog: https://example.com/blog-sitemap.xml
+
+axe:
+  tags:
+    - wcag2a
+    - wcag2aa
+    - wcag21a
+    - wcag21aa
+
+output:
+  formats:
+    - json
+    - html
+    - table
+  directory: ./reports
+
+crawler:
+  timeout: 30000
+  maxRetries: 3
+  concurrent: 2
+
+tester:
+  timeout: 30000
+  maxRetries: 3
+  concurrent: 2
+  waitForTimeout: 5000
