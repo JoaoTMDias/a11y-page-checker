@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import fs from "node:fs/promises";
-import { ReportGenerator } from "../src";
+import { ReportGenerator } from "../src/core";
 import { TestResults } from "../src/types";
 
 vi.mock("node:fs/promises");

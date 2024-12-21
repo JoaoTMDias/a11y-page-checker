@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { SitemapCrawler, AccessibilityTester, ReportGenerator } from "../src";
+import { SitemapCrawler, AccessibilityTester, ReportGenerator } from "../src/core";
 import fs from "node:fs/promises";
 import path from "path";
 

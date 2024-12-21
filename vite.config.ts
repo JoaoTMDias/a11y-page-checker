@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import terser from "@rollup/plugin-terser";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 import PackageJSON from "./package.json";
 
 const { dependencies = {}, devDependencies = {} } = PackageJSON;
@@ -35,12 +36,20 @@ function getFilename(format: ModuleFormat, entryName: string) {
   return OUTPUT[format] ?? `${entryName}.js`; // Changed to .js
 }
 
-const CONFIG: UserConfig = {
+export default defineConfig({
   plugins: [
     dts({
-      insertTypesEntry: false,
+      insertTypesEntry: true,
     }),
     tsconfigPaths(),
+    viteStaticCopy({
+      targets: [
+        {
+          src: "src/core/report-generator/templates",
+          dest: "templates",
+        },
+      ],
+    }),
   ],
   build: {
     rollupOptions: {
@@ -51,7 +60,7 @@ const CONFIG: UserConfig = {
     target: "esnext",
     lib: {
       entry: {
-        index: resolve(__dirname, "src/index.ts"),
+        "a11y-page-checker": resolve(__dirname, "src/index.ts"),
         "cli/commands": resolve(__dirname, "src/commands/index.ts"),
       },
       name: "A11ySiteChecker",
@@ -68,6 +77,4 @@ const CONFIG: UserConfig = {
     },
     mockReset: true,
   },
-};
-
-export default defineConfig(CONFIG);
+});

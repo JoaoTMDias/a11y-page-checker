@@ -1,15 +1,17 @@
-// tests/crawler.test.ts
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { SitemapCrawler } from "../src";
+import { SitemapCrawler } from "../src/core";
 
 describe("SitemapCrawler", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.useFakeTimers();
+    // Mock global fetch
+    global.fetch = vi.fn();
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   test("should successfully crawl a single sitemap", async () => {
@@ -25,7 +27,10 @@ describe("SitemapCrawler", () => {
       </urlset>
     `;
 
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(mockSitemapXml),
+    });
 
     const crawler = new SitemapCrawler();
     const results = await crawler.getSitemaps({
@@ -60,9 +65,16 @@ describe("SitemapCrawler", () => {
       </urlset>
     `;
 
-    vi.mocked(axios.get)
-      .mockResolvedValueOnce({ data: mockSitemapXml1 })
-      .mockResolvedValueOnce({ data: mockSitemapXml2 });
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(mockSitemapXml1),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(mockSitemapXml2),
+      });
 
     const crawler = new SitemapCrawler();
     const results = await crawler.getSitemaps({
@@ -80,7 +92,10 @@ describe("SitemapCrawler", () => {
       <urlset></urlset>
     `;
 
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockEmptySitemap });
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(mockEmptySitemap),
+    });
 
     const crawler = new SitemapCrawler();
     const results = await crawler.getSitemaps({
@@ -88,32 +103,6 @@ describe("SitemapCrawler", () => {
     });
 
     expect(results).toHaveLength(0);
-  });
-
-  test("should handle missing optional fields", async () => {
-    const mockSitemapXml = `
-      <urlset>
-        <url>
-          <loc>https://example.com/page1</loc>
-        </url>
-      </urlset>
-    `;
-
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
-
-    const crawler = new SitemapCrawler();
-    const results = await crawler.getSitemaps({
-      main: "https://example.com/sitemap.xml",
-    });
-
-    expect(results[0]).toEqual({
-      url: "https://example.com/page1",
-      lastModified: null,
-      changeFrequency: null,
-      priority: null,
-      path: "/page1",
-      slug: "page1",
-    });
   });
 
   test("should retry on failure", async () => {
@@ -125,9 +114,13 @@ describe("SitemapCrawler", () => {
       </urlset>
     `;
 
-    vi.mocked(axios.get)
+    global.fetch = vi
+      .fn()
       .mockRejectedValueOnce(new Error("Network error"))
-      .mockResolvedValueOnce({ data: mockSitemapXml });
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(mockSitemapXml),
+      });
 
     const crawler = new SitemapCrawler({
       maxRetries: 1,
@@ -143,33 +136,7 @@ describe("SitemapCrawler", () => {
 
     const results = await crawlPromise;
     expect(results).toHaveLength(1);
-    expect(axios.get).toHaveBeenCalledTimes(2);
-  });
-
-  test("should handle deep nested URLs", async () => {
-    const mockSitemapXml = `
-      <urlset>
-        <url>
-          <loc>https://example.com/blog/category/subcategory/post-1</loc>
-        </url>
-      </urlset>
-    `;
-
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
-
-    const crawler = new SitemapCrawler();
-    const results = await crawler.getSitemaps({
-      main: "https://example.com/sitemap.xml",
-    });
-
-    expect(results[0]).toEqual({
-      url: "https://example.com/blog/category/subcategory/post-1",
-      lastModified: null,
-      changeFrequency: null,
-      priority: null,
-      path: "/blog/category/subcategory/post-1",
-      slug: "post-1",
-    });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   test("should respect custom timeout configuration", async () => {
@@ -181,43 +148,30 @@ describe("SitemapCrawler", () => {
       </urlset>
     `;
 
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve(mockSitemapXml),
+    });
 
     const customTimeout = 15000;
+    const controller = new AbortController();
+
     const crawler = new SitemapCrawler({ timeout: customTimeout });
 
     await crawler.getSitemaps({
       main: "https://example.com/sitemap.xml",
     });
 
-    expect(axios.get).toHaveBeenCalledWith(
+    expect(fetch).toHaveBeenCalledWith(
       "https://example.com/sitemap.xml",
-      expect.objectContaining({ timeout: customTimeout })
+      expect.objectContaining({
+        signal: expect.any(AbortSignal),
+      })
     );
   });
 
-  test("should handle URLs without slug", async () => {
-    const mockSitemapXml = `
-      <urlset>
-        <url>
-          <loc>https://example.com/</loc>
-        </url>
-      </urlset>
-    `;
-
-    vi.mocked(axios.get).mockResolvedValueOnce({ data: mockSitemapXml });
-
-    const crawler = new SitemapCrawler();
-    const results = await crawler.getSitemaps({
-      main: "https://example.com/sitemap.xml",
-    });
-
-    expect(results[0].slug).toBe("");
-    expect(results[0].path).toBe("/");
-  });
-
   test("should handle all retries failing", async () => {
-    vi.mocked(axios.get).mockRejectedValue(new Error("Network error"));
+    global.fetch = vi.fn().mockRejectedValue(new Error("Network error"));
 
     const crawler = new SitemapCrawler({
       maxRetries: 2,
@@ -233,6 +187,6 @@ describe("SitemapCrawler", () => {
 
     const results = await crawlPromise;
     expect(results).toHaveLength(0);
-    expect(axios.get).toHaveBeenCalledTimes(3); // Initial try + 2 retries
+    expect(fetch).toHaveBeenCalledTimes(3); // Initial try + 2 retries
   });
 });

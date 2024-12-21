@@ -1,5 +1,5 @@
 import xml2js from "xml2js";
-import { ParsedCrawledResult, SitemapConfig, SitemapEntry, SitemapURL } from "../types";
+import { ParsedCrawledResult, SitemapConfig, SitemapEntry, SitemapURL } from "../../types";
 
 interface FetchWithTimeoutOptions extends RequestInit {
   timeout?: number;

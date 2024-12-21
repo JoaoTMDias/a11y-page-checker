@@ -1,11 +1,11 @@
 // src/cli/commands/audit.ts
 import { Command, Flags } from "@oclif/core";
-import { SitemapCrawler } from "../sitemap-crawler";
-import { AccessibilityTester } from "../a11y-tester";
-import { ReportGenerator } from "../report-generator";
 import fs from "node:fs/promises";
 import yaml from "yaml";
-import { A11yConfig, TestResults } from "../types";
+import { SitemapCrawler } from "../../core/sitemap-crawler";
+import { AccessibilityTester } from "../../core/a11y-tester";
+import { ReportGenerator } from "../../core/report-generator";
+import { A11yConfig, TestResults } from "../../types";
 
 export default class Audit extends Command {
   static description = "Run accessibility audit on a website using sitemap";

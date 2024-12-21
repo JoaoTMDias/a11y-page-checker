@@ -1,5 +1,5 @@
 import Handlebars from "handlebars";
-import { TestResults } from "../types";
+import { TestResults } from "../../types";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "url";

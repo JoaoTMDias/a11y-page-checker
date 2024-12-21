@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { TestResults } from "../types";
+import { TestResults } from "../../types";
 import { generateHtml } from "../report-generator/helpers";
 
 /**

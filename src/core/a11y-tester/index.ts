@@ -1,6 +1,6 @@
 import { chromium, devices, Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { SitemapConfig, TestResults } from "../types";
+import { SitemapConfig, TestResults } from "../../types";
 
 /**
  * AccessibilityTester is responsible for running accessibility tests on web pages
