@@ -1,7 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { TestResults } from "../../types";
-import { generateHtml } from "../report-generator/helpers";
+
+import { TestResults } from "../../types.ts";
+import { generateHtml } from "../report-generator/helpers.ts";
 
 /**
  * ReportGenerator creates formatted reports from accessibility test results.
@@ -18,6 +19,40 @@ import { generateHtml } from "../report-generator/helpers";
  * ```
  */
 export class ReportGenerator {
+  /**
+   * Generates an HTML report file with a user-friendly visualization of the test results.
+   * Includes styling and interactive elements for better readability.
+   *
+   * @param {TestResults} results - The accessibility test results
+   * @param {string} outputPath - Directory path where the HTML report will be saved
+   * @returns {Promise<void>} Resolves when the HTML report is written
+   *
+   * @throws {Error} If file writing fails
+   *
+   * @private
+   */
+  public async generateHtmlReport(results: TestResults, outputPath: string): Promise<void> {
+    const htmlContent = generateHtml(results);
+    const htmlPath = path.join(outputPath, "accessibility-report.html");
+    await fs.writeFile(htmlPath, htmlContent);
+  }
+
+  /**
+   * Generates a JSON report file containing the raw test results.
+   *
+   * @param {TestResults} results - The accessibility test results
+   * @param {string} outputPath - Directory path where the JSON report will be saved
+   * @returns {Promise<void>} Resolves when the JSON report is written
+   *
+   * @throws {Error} If file writing fails
+   *
+   * @private
+   */
+  public async generateJsonReport(results: TestResults, outputPath: string): Promise<void> {
+    const JSON_PATH = path.join(outputPath, "accessibility-report.json");
+    await fs.writeFile(JSON_PATH, JSON.stringify(results, null, 2));
+  }
+
   /**
    * Generates both JSON and HTML reports from accessibility test results.
    * Creates the output directory if it doesn't exist.
@@ -41,39 +76,5 @@ export class ReportGenerator {
 
     // Generate HTML report
     await this.generateHtmlReport(results, outputPath);
-  }
-
-  /**
-   * Generates a JSON report file containing the raw test results.
-   *
-   * @param {TestResults} results - The accessibility test results
-   * @param {string} outputPath - Directory path where the JSON report will be saved
-   * @returns {Promise<void>} Resolves when the JSON report is written
-   *
-   * @throws {Error} If file writing fails
-   *
-   * @private
-   */
-  public async generateJsonReport(results: TestResults, outputPath: string): Promise<void> {
-    const JSON_PATH = path.join(outputPath, "accessibility-report.json");
-    await fs.writeFile(JSON_PATH, JSON.stringify(results, null, 2));
-  }
-
-  /**
-   * Generates an HTML report file with a user-friendly visualization of the test results.
-   * Includes styling and interactive elements for better readability.
-   *
-   * @param {TestResults} results - The accessibility test results
-   * @param {string} outputPath - Directory path where the HTML report will be saved
-   * @returns {Promise<void>} Resolves when the HTML report is written
-   *
-   * @throws {Error} If file writing fails
-   *
-   * @private
-   */
-  public async generateHtmlReport(results: TestResults, outputPath: string): Promise<void> {
-    const htmlContent = generateHtml(results);
-    const htmlPath = path.join(outputPath, "accessibility-report.html");
-    await fs.writeFile(htmlPath, htmlContent);
   }
 }

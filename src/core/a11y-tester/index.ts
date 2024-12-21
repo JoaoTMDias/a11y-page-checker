@@ -1,6 +1,8 @@
-import { chromium, devices, Page } from "@playwright/test";
-import AxeBuilder from "@axe-core/playwright";
-import { SitemapConfig, TestResults } from "../../types";
+/* eslint-disable no-await-in-loop */
+import { AxeBuilder } from "@axe-core/playwright";
+import { Page, chromium, devices } from "@playwright/test";
+
+import { SitemapConfig, TestResults } from "../../types.ts";
 
 /**
  * AccessibilityTester is responsible for running accessibility tests on web pages
@@ -34,9 +36,9 @@ export class AccessibilityTester {
    */
   constructor(config?: SitemapConfig) {
     this.config = {
-      timeout: 30000,
-      maxRetries: 3,
       concurrent: 2,
+      maxRetries: 3,
+      timeout: 30_000,
       waitForTimeout: 0,
       ...config,
     };
@@ -63,52 +65,50 @@ export class AccessibilityTester {
     const browser = await chromium.launch();
     const results: TestResults = {
       summary: {
-        totalPages: urls.length,
-        pagesWithViolations: 0,
-        totalViolations: 0,
         completedAt: new Date().toISOString(),
+        pagesWithViolations: 0,
+        totalPages: urls.length,
+        totalViolations: 0,
       },
       violations: [],
     };
 
     try {
       // Create a pool of pages based on concurrent config
-      const CONCURRENT_PAGES = await Promise.all(
-        Array(this.config.concurrent)
-          .fill(null)
-          .map(async () => {
-            const context = await browser.newContext(devices["Desktop Chrome"]);
-            const page = await context.newPage();
-
-            return page;
-          })
+      const concurrentPages = await Promise.all(
+        Array.from({ length: this.config.concurrent }).map(async () => {
+          const context = await browser.newContext(devices["Desktop Chrome"]);
+          return context.newPage();
+        }),
       );
 
       // Process URLs in chunks
-      for (let i = 0; i < urls.length; i += this.config.concurrent) {
-        const chunk = urls.slice(i, i + this.config.concurrent);
-        const chunkResults = await Promise.all(
-          chunk.map((url, index) => this.testUrl(url, CONCURRENT_PAGES[index]))
-        );
-
-        results.violations.push(...chunkResults);
-
-        // Update summary
-        const violationsInChunk = chunkResults.filter(
-          (r) => r.violations && r.violations.length > 0
-        );
-        results.summary.pagesWithViolations += violationsInChunk.length;
-        results.summary.totalViolations += violationsInChunk.reduce(
-          (sum, r) => sum + (r.violations?.length || 0),
-          0
-        );
-
-        // Optional delay between chunks
-        if (i + this.config.concurrent < urls.length) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+      const processChunks = async () => {
+        const chunks = [];
+        for (let i = 0; i < urls.length; i += this.config.concurrent) {
+          chunks.push(urls.slice(i, i + this.config.concurrent));
         }
-      }
 
+        for (const [chunkIndex, chunk] of chunks.entries()) {
+          const chunkResults = await Promise.all(chunk.map((url, index) => this.testUrl(url, concurrentPages[index])));
+
+          results.violations.push(...chunkResults);
+
+          // Update summary
+          const violationsInChunk = chunkResults.filter((r) => r.violations && r.violations.length > 0);
+          results.summary.pagesWithViolations += violationsInChunk.length;
+          results.summary.totalViolations += violationsInChunk.reduce((sum, r) => sum + (r.violations?.length || 0), 0);
+
+          // Optional delay between chunks, except for the last chunk
+          if (chunkIndex < chunks.length - 1) {
+            await new Promise((resolve) => {
+              setTimeout(resolve, 1000);
+            });
+          }
+        }
+      };
+
+      await processChunks();
       return results;
     } finally {
       await browser.close();
@@ -117,27 +117,21 @@ export class AccessibilityTester {
 
   /**
    * Tests accessibility for a single URL using a provided Playwright page.
-   *
-   * @param {string} url - URL to test
-   * @param {Page} page - Playwright page instance to use for testing
-   * @returns {Promise<TestResults["violations"][0]>} Results of testing the URL
-   *
-   * @throws {Error} If page navigation or accessibility testing fails
-   *
-   * @private
    */
   private async testUrl(url: string, page: Page): Promise<TestResults["violations"][0]> {
     try {
       // Navigate to the page and wait for it to load
       await page.goto(url, {
-        waitUntil: "networkidle",
         timeout: this.config.timeout,
+        waitUntil: "networkidle",
       });
 
       await page.waitForLoadState("domcontentloaded");
 
       if (this.config.waitForTimeout) {
-        await new Promise((t) => setTimeout(t, this.config.waitForTimeout));
+        await new Promise((t) => {
+          setTimeout(t, this.config.waitForTimeout);
+        });
       }
 
       // Run accessibility tests using Axe
@@ -146,15 +140,15 @@ export class AccessibilityTester {
         .analyze();
 
       return {
-        url,
         timestamp: new Date().toISOString(),
+        url,
         violations: accessibilityScanResults.violations,
       };
     } catch (error) {
       return {
-        url,
-        timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+        url,
       };
     }
   }

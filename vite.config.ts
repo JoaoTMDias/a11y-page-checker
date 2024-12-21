@@ -1,42 +1,53 @@
 /// <reference types="vitest/globals" />
-import { resolve } from "node:path";
-import type { UserConfig } from "vite";
+import path, { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
-import tsconfigPaths from "vite-tsconfig-paths";
 import terser from "@rollup/plugin-terser";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import tsconfigPaths from "vite-tsconfig-paths";
+
 import PackageJSON from "./package.json";
 
 const { dependencies = {}, devDependencies = {} } = PackageJSON;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const EXTERNAL_DEPENDENCIES = Object.keys({
   ...dependencies,
   ...devDependencies,
 });
 
-type ModuleFormat =
-  | "amd"
-  | "cjs"
-  | "es"
-  | "iife"
-  | "system"
-  | "umd"
-  | "commonjs"
-  | "esm"
-  | "module"
-  | "systemjs";
+type ModuleFormat = "amd" | "cjs" | "commonjs" | "es" | "esm" | "iife" | "module" | "system" | "systemjs" | "umd";
 
 function getFilename(format: ModuleFormat, entryName: string) {
   const OUTPUT: Partial<Record<typeof format, string>> = {
+    cjs: `${entryName}.cjs`, // Changed to .js for CLI compatibility
     es: `${entryName}.mjs`,
-    cjs: `${entryName}.js`, // Changed to .js for CLI compatibility
   };
 
-  return OUTPUT[format] ?? `${entryName}.js`; // Changed to .js
+  return OUTPUT[format] ?? `${entryName}.cjs`; // Changed to .js
 }
 
 export default defineConfig({
+  build: {
+    lib: {
+      entry: {
+        "commands/hello": resolve(__dirname, "src/commands/hello/index.ts"),
+        "commands/audit": resolve(__dirname, "src/commands/audit/index.ts"),
+        "core/index": resolve(__dirname, "src/core/index.ts"),
+      },
+      fileName: getFilename,
+      formats: ["es", "cjs"],
+      name: "A11yPageChecker",
+    },
+    minify: "terser",
+    rollupOptions: {
+      plugins: [terser()],
+      external: EXTERNAL_DEPENDENCIES,
+    },
+    target: "esnext",
+  },
   plugins: [
     dts({
       insertTypesEntry: true,
@@ -45,36 +56,19 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
-          src: "src/core/report-generator/templates",
           dest: "templates",
+          src: "src/core/report-generator/templates",
         },
       ],
     }),
   ],
-  build: {
-    rollupOptions: {
-      plugins: [terser()],
-      external: EXTERNAL_DEPENDENCIES,
-    },
-    minify: "esbuild",
-    target: "esnext",
-    lib: {
-      entry: {
-        "a11y-page-checker": resolve(__dirname, "src/index.ts"),
-        "cli/commands": resolve(__dirname, "src/commands/index.ts"),
-      },
-      name: "A11ySiteChecker",
-      formats: ["es", "cjs"],
-      fileName: getFilename,
-    },
-  },
   test: {
-    environment: "node",
     coverage: {
+      exclude: ["node_modules/", "dist/"],
       provider: "v8",
       reporter: ["text", "json", "html"],
-      exclude: ["node_modules/", "dist/"],
     },
+    environment: "node",
     mockReset: true,
   },
 });

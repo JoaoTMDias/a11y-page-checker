@@ -1,45 +1,45 @@
-import axe from "axe-core";
+import { Result } from "axe-core";
 
 export interface SitemapConfig {
-  timeout?: number;
-  maxRetries?: number;
   concurrent?: number;
+  maxRetries?: number;
+  timeout?: number;
   waitForTimeout?: number;
 }
 
 export interface SitemapEntry {
-  url: string;
-  lastModified: string | null;
-  changeFrequency: string | null;
-  priority: number | null;
+  changeFrequency: null | string;
+  lastModified: null | string;
   path: string;
+  priority: null | number;
   slug: string;
+  url: string;
 }
 
 export interface AccessibilityViolation {
-  id: string;
-  impact: "critical" | "serious" | "moderate" | "minor";
   description: string;
   helpUrl: string;
+  id: string;
+  impact: "critical" | "minor" | "moderate" | "serious";
   nodes: {
-    html: string;
     failureSummary: string;
+    html: string;
     target: string[];
   }[];
 }
 
 export interface TestResultsSummary {
-  totalPages: number;
-  pagesWithViolations: number;
-  totalViolations: number;
   completedAt: string;
+  pagesWithViolations: number;
+  totalPages: number;
+  totalViolations: number;
 }
 
 export interface TestResultsViolation {
-  url: string;
-  timestamp: string;
-  violations?: axe.Result[];
   error?: string;
+  timestamp: string;
+  url: string;
+  violations?: Result[];
 }
 
 export interface TestResults {
@@ -53,15 +53,15 @@ export interface AxeConfig {
 }
 
 export interface OutputConfig {
-  formats: ("json" | "html" | "table")[];
   directory: string;
+  formats: ("html" | "json" | "table")[];
 }
 
 export interface A11yConfig {
-  sitemaps: Record<string, string>;
   axe?: AxeConfig;
-  output: OutputConfig;
   crawler?: SitemapConfig;
+  output: OutputConfig;
+  sitemaps: Record<string, string>;
   tester?: SitemapConfig;
 }
 
@@ -75,17 +75,17 @@ export interface Urlset {
 }
 
 export interface Empty {
-  "xmlns:xsi": string;
-  "xmlns:image": string;
-  "xsi:schemaLocation": string;
   xmlns: string;
+  "xmlns:image": string;
+  "xmlns:xsi": string;
+  "xsi:schemaLocation": string;
 }
 
 export interface SitemapURL {
-  loc: string[];
-  lastmod: Date[];
-  "image:image"?: ImageImage[];
   changefreq?: string[];
+  "image:image"?: ImageImage[];
+  lastmod: Date[];
+  loc: string[];
   priority?: string[];
 }
 

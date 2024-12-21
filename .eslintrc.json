@@ -1,0 +1,11 @@
+{
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "extends": ["oclif", "oclif-typescript", "prettier"],
+  "rules": {
+    "valid-jsdoc": "off",
+    "unicorn/prefer-node-protocol": "off",
+    "unicorn/no-array-reduce": "off"
+  }
+}

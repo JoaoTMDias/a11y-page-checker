@@ -1,5 +1,7 @@
-import xml2js from "xml2js";
-import { ParsedCrawledResult, SitemapConfig, SitemapEntry, SitemapURL } from "../../types";
+/* eslint-disable no-await-in-loop */
+import { Parser } from "xml2js";
+
+import { ParsedCrawledResult, SitemapConfig, SitemapEntry, SitemapURL } from "../../types.ts";
 
 interface FetchWithTimeoutOptions extends RequestInit {
   timeout?: number;
@@ -12,11 +14,8 @@ interface FetchWithTimeoutOptions extends RequestInit {
  * @param {FetchWithTimeoutOptions} [options={}]
  * @returns {*}
  */
-async function fetchWithTimeout(
-  resource: string | URL | Request,
-  options: FetchWithTimeoutOptions = {}
-) {
-  const { timeout = 30000 } = options;
+async function fetchWithTimeout(resource: Request | URL | string, options: FetchWithTimeoutOptions = {}) {
+  const { timeout = 30_000 } = options;
 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -31,7 +30,7 @@ async function fetchWithTimeout(
 }
 
 // Parse the XML content
-const PARSER = new xml2js.Parser();
+const PARSER = new Parser();
 
 /**
  * SitemapCrawler is responsible for fetching and parsing XML sitemaps,
@@ -65,9 +64,9 @@ export class SitemapCrawler {
    */
   constructor(config?: SitemapConfig) {
     this.config = {
-      timeout: 30000,
-      maxRetries: 3,
       concurrent: 2,
+      maxRetries: 3,
+      timeout: 30_000,
       waitForTimeout: 5000,
       ...config,
     };
@@ -128,21 +127,19 @@ export class SitemapCrawler {
       });
       const data = await response.text();
 
-      if (!!data && response.status === 200) {
+      if (Boolean(data) && response.status === 200) {
         const { urlset }: ParsedCrawledResult = await PARSER.parseStringPromise(data);
 
         // Extract and transform the entries
         return (
-          urlset.url?.map<SitemapEntry>(({ loc, lastmod, changefreq, priority }: SitemapURL) => {
-            return {
-              url: loc[0],
-              lastModified: lastmod?.[0].toString() || null,
-              changeFrequency: changefreq?.[0] || null,
-              priority: priority ? parseFloat(priority[0]) : null,
-              path: new URL(loc[0]).pathname,
-              slug: new URL(loc[0]).pathname.split("/").filter(Boolean).pop() || "",
-            };
-          }) ?? []
+          urlset.url?.map<SitemapEntry>(({ changefreq, lastmod, loc, priority }: SitemapURL) => ({
+            changeFrequency: changefreq?.[0] || null,
+            lastModified: lastmod?.[0].toString() || null,
+            path: new URL(loc[0]).pathname,
+            priority: priority ? Number.parseFloat(priority[0]) : null,
+            slug: new URL(loc[0]).pathname.split("/").filter(Boolean).pop() || "",
+            url: loc[0],
+          })) ?? []
         );
       }
 
@@ -152,7 +149,9 @@ export class SitemapCrawler {
       // Implement retry logic for failed requests
       if (retries < this.config.maxRetries) {
         console.log(`Retry ${retries + 1} for ${url}`);
-        await new Promise((t) => setTimeout(t, 5000));
+        await new Promise((t) => {
+          setTimeout(t, 5000);
+        });
         return this.getSitemap(url, retries + 1);
       }
 

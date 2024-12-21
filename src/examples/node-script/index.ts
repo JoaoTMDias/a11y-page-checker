@@ -1,7 +1,8 @@
 import chalk from "chalk";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { AccessibilityTester, ReportGenerator, SitemapCrawler } from "../../src/core";
+
+import { AccessibilityTester, ReportGenerator, SitemapCrawler } from "../../core/index.ts";
 
 const URL = "http://localhost:5173/page-sitemap.xml";
 const __filename = fileURLToPath(import.meta.url);
@@ -31,4 +32,4 @@ async function testCrawler() {
   }
 }
 
-testCrawler();
+await testCrawler();
