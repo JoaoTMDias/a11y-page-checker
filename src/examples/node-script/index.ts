@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { AccessibilityTester, ReportGenerator, SitemapCrawler } from "../../core/index.ts";
 
-const URL = "http://localhost:5173/page-sitemap.xml";
+const URL = "https://ruc.pt/sitemap-0.xml";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const OUTPUT_DIR = path.join(__dirname, "test-reports");
@@ -21,7 +21,7 @@ async function testCrawler() {
     });
 
     if (Array.isArray(PAGES)) {
-      console.log(chalk.bgBlue(chalk.white(`Crawled ${PAGES.length} pages`)));
+      console.log(chalk.bgBlue(chalk.white(`Found ${PAGES.length} pages. Performing tests...`)));
 
       const results = await A11yTester.testUrls(PAGES.map((page) => page.url));
 

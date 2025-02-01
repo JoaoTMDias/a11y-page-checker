@@ -1,115 +1,39 @@
 {
-  "name": "@jtmdias/a11y-site-checker",
-  "description": "A tool perform accessibility testing and reports",
+  "name": "a11y-page-checker",
+  "private": true,
   "version": "0.0.0",
-  "author": "João Dias",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    },
-    "./core": {
-      "types": "./dist/core/index.d.ts",
-      "import": "./dist/core/index.mjs",
-      "require": "./dist/core/index.cjs"
-    }
-  },
-  "bin": {
-    "a11y-page-checker": "./bin/run.js"
-  },
-  "bugs": "https://github.com/joaotmdias/a11y-page-checker/issues",
-  "dependencies": {
-    "@axe-core/playwright": "^4.10.1",
-    "@oclif/core": "^4",
-    "@oclif/plugin-help": "^6",
-    "@oclif/plugin-plugins": "^5",
-    "handlebars": "^4.7.8",
-    "xml2js": "^0.6.2"
-  },
-  "devDependencies": {
-    "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^4",
-    "@playwright/test": "^1.49.1",
-    "@rollup/plugin-terser": "^0.4.4",
-    "@types/chai": "^4",
-    "@types/mocha": "^10",
-    "@types/node": "^18.19.68",
-    "@types/xml2js": "^0.4.14",
-    "@vitest/coverage-v8": "^2.1.8",
-    "axe-core": "^4.10.2",
-    "chai": "^4",
-    "chalk": "^5.4.1",
-    "eslint": "^8",
-    "eslint-config-oclif": "^5",
-    "eslint-config-oclif-typescript": "^3",
-    "eslint-config-prettier": "^9",
-    "mocha": "^10",
-    "oclif": "^4",
-    "shx": "^0.3.3",
-    "start-server-and-test": "^2.0.9",
-    "ts-node": "^10",
-    "tsx": "^4.19.2",
-    "typescript": "^5",
-    "url": "^0.11.4",
-    "vite": "^6.0.5",
-    "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-dts": "^4.4.0",
-    "vite-plugin-istanbul": "^6.0.2",
-    "vite-plugin-static-copy": "^2.2.0",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.8",
-    "yaml": "^2.6.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "files": [
-    "/bin",
-    "/dist",
-    "/oclif.manifest.json"
-  ],
-  "homepage": "https://github.com/joaotmdias/a11y-page-checker",
-  "keywords": [
-    "accessibility",
-    "sitemap",
-    "crawler",
-    "axe-core",
-    "playwright",
-    "a11y"
-  ],
-  "license": "MIT",
   "type": "module",
-  "oclif": {
-    "bin": "a11y-page-checker",
-    "dirname": "a11y-page-checker",
-    "commands": "./dist/commands",
-    "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
-    ],
-    "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
-  },
-  "repository": "joaotmdias/a11y-page-checker",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint src --ext .ts",
-    "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
-    "prepack": "oclif manifest && oclif readme",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "crawl-example": "tsx ./examples/node-script/index.ts",
+    "crawl-example": "tsx ./src/examples/node-script/index.ts",
     "test:example:node-script": "start-server-and-test dev http://localhost:5173 crawl-example",
-    "version": "oclif readme && git add README.md",
     "bundle-visualizer": "vite-bundle-visualizer"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "@types/node": "^22.13.0",
+    "@types/xml2js": "^0.4.14",
+    "shx": "^0.3.4",
+    "tsx": "^4.19.2",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "vite-bundle-visualizer": "^1.2.1",
+    "vite-plugin-dts": "^4.5.0",
+    "vite-plugin-istanbul": "^6.0.2",
+    "vite-plugin-static-copy": "^2.2.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@jtmdias/js-utilities": "^3.0.0",
+    "@playwright/test": "^1.50.1",
+    "axe-core": "^4.10.2",
+    "chalk": "^5.4.1",
+    "handlebars": "^4.7.8",
+    "xml2js": "^0.6.2",
+    "yaml": "^2.7.0"
   }
 }

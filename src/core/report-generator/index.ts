@@ -1,8 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-
-import { TestResults } from "../../types.ts";
-import { generateHtml } from "../report-generator/helpers.ts";
+import { TestResults } from "@/types";
+import { generateHtml } from "@/core/report-generator/helpers";
 
 /**
  * ReportGenerator creates formatted reports from accessibility test results.

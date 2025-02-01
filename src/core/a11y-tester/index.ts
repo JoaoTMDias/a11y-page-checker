@@ -1,8 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import { AxeBuilder } from "@axe-core/playwright";
 import { Page, chromium, devices } from "@playwright/test";
-
-import { SitemapConfig, TestResults } from "../../types.ts";
+import { SitemapConfig, TestResults } from "@/types";
 
 /**
  * AccessibilityTester is responsible for running accessibility tests on web pages
@@ -79,7 +78,7 @@ export class AccessibilityTester {
         Array.from({ length: this.config.concurrent }).map(async () => {
           const context = await browser.newContext(devices["Desktop Chrome"]);
           return context.newPage();
-        }),
+        })
       );
 
       // Process URLs in chunks
@@ -90,14 +89,21 @@ export class AccessibilityTester {
         }
 
         for (const [chunkIndex, chunk] of chunks.entries()) {
-          const chunkResults = await Promise.all(chunk.map((url, index) => this.testUrl(url, concurrentPages[index])));
+          const chunkResults = await Promise.all(
+            chunk.map((url, index) => this.testUrl(url, concurrentPages[index]))
+          );
 
           results.violations.push(...chunkResults);
 
           // Update summary
-          const violationsInChunk = chunkResults.filter((r) => r.violations && r.violations.length > 0);
+          const violationsInChunk = chunkResults.filter(
+            (r) => r.violations && r.violations.length > 0
+          );
           results.summary.pagesWithViolations += violationsInChunk.length;
-          results.summary.totalViolations += violationsInChunk.reduce((sum, r) => sum + (r.violations?.length || 0), 0);
+          results.summary.totalViolations += violationsInChunk.reduce(
+            (sum, r) => sum + (r.violations?.length || 0),
+            0
+          );
 
           // Optional delay between chunks, except for the last chunk
           if (chunkIndex < chunks.length - 1) {

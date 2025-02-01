@@ -2,8 +2,7 @@ import Handlebars from "handlebars";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "url";
-
-import { TestResults } from "../../types.ts";
+import { TestResults } from "@/types";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -17,15 +16,24 @@ Handlebars.registerHelper(
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;"),
-    ),
+        .replaceAll("'", "&#039;")
+    )
 );
 
 export function generateHtml(results: TestResults) {
   // Load and register partials
-  const summaryPartial = fs.readFileSync(path.join(__dirname, "templates/partials/summary.hbs"), "utf8");
-  const violationsPartial = fs.readFileSync(path.join(__dirname, "templates/partials/violations.hbs"), "utf8");
-  const stylesPartial = fs.readFileSync(path.join(__dirname, "templates/partials/styles.hbs"), "utf8");
+  const summaryPartial = fs.readFileSync(
+    path.join(__dirname, "templates/partials/summary.hbs"),
+    "utf8"
+  );
+  const violationsPartial = fs.readFileSync(
+    path.join(__dirname, "templates/partials/violations.hbs"),
+    "utf8"
+  );
+  const stylesPartial = fs.readFileSync(
+    path.join(__dirname, "templates/partials/styles.hbs"),
+    "utf8"
+  );
 
   Handlebars.registerPartial("summary", summaryPartial);
   Handlebars.registerPartial("violations", violationsPartial);

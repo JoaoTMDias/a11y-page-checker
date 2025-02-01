@@ -18,7 +18,17 @@ const EXTERNAL_DEPENDENCIES = Object.keys({
   ...devDependencies,
 });
 
-type ModuleFormat = "amd" | "cjs" | "commonjs" | "es" | "esm" | "iife" | "module" | "system" | "systemjs" | "umd";
+type ModuleFormat =
+  | "amd"
+  | "cjs"
+  | "commonjs"
+  | "es"
+  | "esm"
+  | "iife"
+  | "module"
+  | "system"
+  | "systemjs"
+  | "umd";
 
 function getFilename(format: ModuleFormat, entryName: string) {
   const OUTPUT: Partial<Record<typeof format, string>> = {
@@ -33,9 +43,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        "commands/hello": resolve(__dirname, "src/commands/hello/index.ts"),
-        "commands/audit": resolve(__dirname, "src/commands/audit/index.ts"),
-        "core/index": resolve(__dirname, "src/core/index.ts"),
+        index: resolve(__dirname, "src/index.ts"),
       },
       fileName: getFilename,
       formats: ["es", "cjs"],

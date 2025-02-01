@@ -14,7 +14,10 @@ interface FetchWithTimeoutOptions extends RequestInit {
  * @param {FetchWithTimeoutOptions} [options={}]
  * @returns {*}
  */
-async function fetchWithTimeout(resource: Request | URL | string, options: FetchWithTimeoutOptions = {}) {
+async function fetchWithTimeout(
+  resource: Request | URL | string,
+  options: FetchWithTimeoutOptions = {}
+) {
   const { timeout = 30_000 } = options;
 
   const controller = new AbortController();
