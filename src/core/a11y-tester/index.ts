@@ -3,7 +3,25 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { Page, chromium, devices } from "@playwright/test";
 import { SitemapConfig, TestResults, ProcessChunksProps } from "@/types";
 import chalk from "chalk";
-import { chunk } from "@jtmdias/js-utilities";
+import { chunk, isEmpty, isNil, isString, template, wait } from "@jtmdias/js-utilities";
+import { Result } from "axe-core";
+
+type GetResultParams =
+  | {
+      state: "error";
+      data: string;
+      verbose: undefined;
+    }
+  | {
+      state: "no-violations";
+      data: undefined;
+      verbose: undefined;
+    }
+  | {
+      state: "has-violations";
+      data: Result[];
+      verbose: boolean;
+    };
 
 /**
  * AccessibilityTester is responsible for running accessibility tests on web pages
@@ -48,22 +66,18 @@ export class AccessibilityTester {
   /**
    * Tests accessibility for a single URL using a provided Playwright page.
    */
-  private async testUrl(url: string, page: Page): Promise<TestResults["violations"][0]> {
+  private async _testUrl(url: string, page: Page): Promise<TestResults["violations"][0]> {
     try {
       console.log(chalk.bgBlue(chalk.white(`Checking ${url}...`)));
 
       // Navigate to the page and wait for it to load
       await page.goto(url, {
         timeout: this.config.timeout,
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
       });
 
-      await page.waitForLoadState("domcontentloaded");
-
       if (this.config.waitForTimeout) {
-        await new Promise((t) => {
-          setTimeout(t, this.config.waitForTimeout);
-        });
+        await wait(this.config.waitForTimeout);
       }
 
       // Run accessibility tests using Axe
@@ -88,11 +102,45 @@ export class AccessibilityTester {
   /**
    * Print a progress bar for completed/total.
    */
-  private printProgress(completed: number, total: number) {
+  private _printProgress(completed: number, total: number) {
     const barLength = 20;
     const filled = Math.round((completed / total) * barLength);
     const bar = chalk.green("█").repeat(filled) + chalk.gray("░").repeat(barLength - filled);
     process.stdout.write(`\r[${bar}] ${completed}/${total} done`);
+  }
+
+  /**
+   * Creates a summary list of all the violations
+   * @param data
+   * @returns
+   */
+  private _createOutputList(data: Result[]) {
+    return data
+      .map((item) => {
+        return `* [${item.impact}] - ${item.impact}`;
+      })
+      .join("\n");
+  }
+
+  /**
+   * Returns the message according to the result's state.
+   * @param params
+   * @returns
+   */
+  private _getResultMessage({ state, data, verbose }: GetResultParams): string {
+    switch (state) {
+      case "error":
+        return chalk.red(` Error: ${data.split("\n")[0]}`);
+
+      case "no-violations":
+        return chalk.green("✅ 0 issues");
+
+      case "has-violations":
+        const baseMessage = chalk.red(`❌ ${data.length} issues`);
+        const output = verbose ? baseMessage.concat(`\n${this._createOutputList(data)}`) : baseMessage;
+
+        return output;
+    }
   }
 
   /**
@@ -102,7 +150,7 @@ export class AccessibilityTester {
    * @param verbose - Whether to print verbose per-page results
    * @returns Processed results
    */
-  private async processChunks({ urls, concurrent, concurrentPages, results }: ProcessChunksProps, verbose = false) {
+  private async _processChunks({ urls, concurrent, concurrentPages, results }: ProcessChunksProps, verbose = false) {
     const chunks = chunk(urls, concurrent);
     const processedResults = { ...results };
     let completed = 0;
@@ -112,26 +160,47 @@ export class AccessibilityTester {
       const chunkResults = await Promise.all(
         chunkUrls.map(async (url, idx) => {
           const page = concurrentPages[idx];
-          const result = await this.testUrl(url, page);
+          const result = await this._testUrl(url, page);
+          const pageProgress = `${completed} of ${total}`;
+          const title = chalk.cyan(url);
+          let lineTemplate = `[${pageProgress}] ${title}: {{lineContent}}`;
+          let resultTemplate = "";
+
+          switch (true) {
+            case !isNil(result.error) && isString(result.error):
+              resultTemplate = this._getResultMessage({
+                state: "error",
+                data: result.error,
+                verbose: undefined,
+              });
+              break;
+
+            case !isNil(result.violations) && !isEmpty(result.violations):
+              resultTemplate = this._getResultMessage({
+                state: "has-violations",
+                data: result.violations,
+                verbose,
+              });
+              break;
+
+            default:
+              resultTemplate = this._getResultMessage({
+                state: "no-violations",
+                data: undefined,
+                verbose: undefined,
+              });
+          }
+
           completed++;
 
-          // Per-page feedback (always on a new line)
-          let line = `[${completed}/${total}] ${chalk.cyan(url)} `;
-          if (result.error) {
-            line += chalk.red(`Error: ${result.error.split("\n")[0]}`);
-          } else if (!result.violations || result.violations.length === 0) {
-            line += chalk.green("0 issues ✅");
-          } else {
-            line += chalk.red(`${result.violations.length} issues ❌`);
-            if (verbose && result.violations.length > 0) {
-              const top = result.violations[0];
-              line += `\n   - [${top.impact}] ${top.help}`;
-            }
-          }
-          console.log(line);
+          const message = template(lineTemplate, {
+            lineContent: resultTemplate,
+          });
+
+          console.log(message);
 
           // Print progress bar after per-page result
-          this.printProgress(completed, total);
+          this._printProgress(completed, total);
 
           return result;
         }),
@@ -164,7 +233,7 @@ export class AccessibilityTester {
    * @param {boolean} [verbose=false] - Whether to print verbose per-page results
    * @returns {Promise<TestResults>} Results of accessibility testing including violations and summary
    */
-  async testUrls(urls: string[], verbose = false): Promise<TestResults> {
+  public async testUrls(urls: string[], verbose = false): Promise<TestResults> {
     const browser = await chromium.launch();
     const results: TestResults = {
       summary: {
@@ -185,7 +254,7 @@ export class AccessibilityTester {
         }),
       );
 
-      const processedResults = await this.processChunks(
+      const processedResults = await this._processChunks(
         {
           urls,
           concurrent: this.config.concurrent,
