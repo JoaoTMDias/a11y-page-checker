@@ -86,19 +86,56 @@ export class AccessibilityTester {
   }
 
   /**
-   * Process URLs in chunks
-   *
-   * @param param0
-   * @returns
+   * Print a progress bar for completed/total.
    */
-  private async processChunks({ urls, concurrent, concurrentPages, results }: ProcessChunksProps) {
-    const chunks = chunk(urls, concurrent);
-    const processedResults = {
-      ...results,
-    };
+  private printProgress(completed: number, total: number) {
+    const barLength = 20;
+    const filled = Math.round((completed / total) * barLength);
+    const bar = chalk.green("█").repeat(filled) + chalk.gray("░").repeat(barLength - filled);
+    process.stdout.write(`\r[${bar}] ${completed}/${total} done`);
+  }
 
-    for (const [chunkIndex, chunk] of chunks.entries()) {
-      const chunkResults = await Promise.all(chunk.map((url, index) => this.testUrl(url, concurrentPages[index])));
+  /**
+   * Process URLs in chunks, with per-page and progress feedback.
+   *
+   * @param param0 - ProcessChunksProps plus verbose flag
+   * @param verbose - Whether to print verbose per-page results
+   * @returns Processed results
+   */
+  private async processChunks({ urls, concurrent, concurrentPages, results }: ProcessChunksProps, verbose = false) {
+    const chunks = chunk(urls, concurrent);
+    const processedResults = { ...results };
+    let completed = 0;
+    const total = urls.length;
+
+    for (const [chunkIndex, chunkUrls] of chunks.entries()) {
+      const chunkResults = await Promise.all(
+        chunkUrls.map(async (url, idx) => {
+          const page = concurrentPages[idx];
+          const result = await this.testUrl(url, page);
+          completed++;
+
+          // Per-page feedback (always on a new line)
+          let line = `[${completed}/${total}] ${chalk.cyan(url)} `;
+          if (result.error) {
+            line += chalk.red(`Error: ${result.error.split("\n")[0]}`);
+          } else if (!result.violations || result.violations.length === 0) {
+            line += chalk.green("0 issues ✅");
+          } else {
+            line += chalk.red(`${result.violations.length} issues ❌`);
+            if (verbose && result.violations.length > 0) {
+              const top = result.violations[0];
+              line += `\n   - [${top.impact}] ${top.help}`;
+            }
+          }
+          console.log(line);
+
+          // Print progress bar after per-page result
+          this.printProgress(completed, total);
+
+          return result;
+        }),
+      );
 
       processedResults.violations.push(...chunkResults);
 
@@ -112,12 +149,11 @@ export class AccessibilityTester {
 
       // Optional delay between chunks, except for the last chunk
       if (chunkIndex < chunks.length - 1) {
-        await new Promise((resolve) => {
-          setTimeout(resolve, 1000);
-        });
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
 
+    process.stdout.write("\n\n");
     return processedResults;
   }
 
@@ -125,20 +161,10 @@ export class AccessibilityTester {
    * Tests accessibility for an array of URLs.
    *
    * @param {string[]} urls - Array of URLs to test
+   * @param {boolean} [verbose=false] - Whether to print verbose per-page results
    * @returns {Promise<TestResults>} Results of accessibility testing including violations and summary
-   *
-   * @throws {Error} If browser launching fails
-   *
-   * @example
-   * ```typescript
-   * const results = await tester.testUrls([
-   *   'https://example.com/page1',
-   *   'https://example.com/page2'
-   * ]);
-   * console.log(`Found ${results.summary.totalViolations} violations`);
-   * ```
    */
-  async testUrls(urls: string[]): Promise<TestResults> {
+  async testUrls(urls: string[], verbose = false): Promise<TestResults> {
     const browser = await chromium.launch();
     const results: TestResults = {
       summary: {
@@ -159,12 +185,15 @@ export class AccessibilityTester {
         }),
       );
 
-      const processedResults = await this.processChunks({
-        urls,
-        concurrent: this.config.concurrent,
-        concurrentPages,
-        results,
-      });
+      const processedResults = await this.processChunks(
+        {
+          urls,
+          concurrent: this.config.concurrent,
+          concurrentPages,
+          results,
+        },
+        verbose,
+      );
 
       return processedResults;
     } finally {
