@@ -8,7 +8,7 @@
     "build": "tsc && vite build",
     "lint": "eslint src --ext .ts",
     "posttest": "npm run lint",
-    "crawl-example": "tsx ./src/examples/node-script/index.ts",
+    "crawl-example": "tsx ./examples/node-script/index.ts",
     "test:example:node-script": "start-server-and-test dev http://localhost:5173 crawl-example",
     "bundle-visualizer": "vite-bundle-visualizer"
   },

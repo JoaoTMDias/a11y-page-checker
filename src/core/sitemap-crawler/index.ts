@@ -1,7 +1,8 @@
 /* eslint-disable no-await-in-loop */
 import { Parser } from "xml2js";
-
+import { readFile } from "node:fs/promises";
 import { ParsedCrawledResult, SitemapConfig, SitemapEntry, SitemapURL } from "../../types.ts";
+import { isEmpty, isNil } from "@jtmdias/js-utilities";
 
 interface FetchWithTimeoutOptions extends RequestInit {
   timeout?: number;
@@ -14,10 +15,7 @@ interface FetchWithTimeoutOptions extends RequestInit {
  * @param {FetchWithTimeoutOptions} [options={}]
  * @returns {*}
  */
-async function fetchWithTimeout(
-  resource: Request | URL | string,
-  options: FetchWithTimeoutOptions = {}
-) {
+async function fetchWithTimeout(resource: Request | URL | string, options: FetchWithTimeoutOptions = {}) {
   const { timeout = 30_000 } = options;
 
   const controller = new AbortController();
@@ -27,13 +25,32 @@ async function fetchWithTimeout(
     ...options,
     signal: controller.signal,
   });
+
   clearTimeout(id);
 
   return response;
 }
 
+function transformEntriesToList({ changefreq, lastmod, loc, priority }: SitemapURL): SitemapEntry {
+  const changeFrequency = changefreq?.[0] || null;
+  const lastModified = lastmod?.[0].toString() || null;
+  const path = new URL(loc[0]).pathname;
+  const priorityValue = priority ? Number.parseFloat(priority[0]) : null;
+  const slug = new URL(loc[0]).pathname.split("/").filter(Boolean).pop() ?? "";
+  const url = loc[0];
+
+  return {
+    changeFrequency,
+    lastModified,
+    path,
+    priority: priorityValue,
+    slug,
+    url,
+  };
+}
+
 // Parse the XML content
-const PARSER = new Parser();
+const xmlParser = new Parser();
 
 /**
  * SitemapCrawler is responsible for fetching and parsing XML sitemaps,
@@ -105,6 +122,26 @@ export class SitemapCrawler {
   }
 
   /**
+   * Reads content from either a local file or a URL
+   * @param {string} pathOrUrl - Local file path or URL
+   * @returns {Promise<string>} The content as a string
+   */
+  async readContent(pathOrUrl: string): Promise<string> {
+    try {
+      // Check if it's a URL
+      new URL(pathOrUrl);
+      // It's a URL, fetch it
+      const response = await fetchWithTimeout(pathOrUrl, {
+        timeout: 30_000,
+      });
+      return response.text();
+    } catch {
+      // Not a URL, treat as local file
+      return readFile(pathOrUrl, "utf-8");
+    }
+  }
+
+  /**
    * Crawls a single sitemap URL and extracts its entries.
    * Implements retry logic for failed requests.
    *
@@ -124,26 +161,18 @@ export class SitemapCrawler {
    */
   private async getSitemap(url: string, retries = 0): Promise<SitemapEntry[]> {
     try {
-      // Fetch the sitemap XML
-      const response = await fetchWithTimeout(url, {
-        timeout: this.config.timeout,
-      });
-      const data = await response.text();
+      // Read the content from either local file or URL
+      const data = await this.readContent(url);
 
-      if (Boolean(data) && response.status === 200) {
-        const { urlset }: ParsedCrawledResult = await PARSER.parseStringPromise(data);
+      if (!isNil(data)) {
+        const { urlset }: ParsedCrawledResult = await xmlParser.parseStringPromise(data);
 
-        // Extract and transform the entries
-        return (
-          urlset.url?.map<SitemapEntry>(({ changefreq, lastmod, loc, priority }: SitemapURL) => ({
-            changeFrequency: changefreq?.[0] || null,
-            lastModified: lastmod?.[0].toString() || null,
-            path: new URL(loc[0]).pathname,
-            priority: priority ? Number.parseFloat(priority[0]) : null,
-            slug: new URL(loc[0]).pathname.split("/").filter(Boolean).pop() || "",
-            url: loc[0],
-          })) ?? []
-        );
+        if (urlset.url && Array.isArray(urlset.url) && !isEmpty(urlset.url)) {
+          // Extract and transform the entries
+          const transformedEntries = urlset.url.map<SitemapEntry>(transformEntriesToList);
+
+          return transformedEntries;
+        }
       }
 
       return [];

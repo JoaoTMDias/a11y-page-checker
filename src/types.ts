@@ -1,3 +1,4 @@
+import { Page } from "@playwright/test";
 import { Result } from "axe-core";
 
 export interface SitemapConfig {
@@ -91,4 +92,28 @@ export interface SitemapURL {
 
 export interface ImageImage {
   "image:loc": string[];
+}
+
+export interface ProcessChunksProps {
+  urls: string[];
+  concurrent: number;
+  concurrentPages: Page[];
+  results: TestResults;
+}
+
+export interface WebsiteCrawlerConfig extends SitemapConfig {
+  baseUrl: string;
+  excludePatterns?: string[];
+  includePatterns?: string[];
+  maxDepth?: number;
+  maxPages?: number;
+}
+
+export interface CrawlResult {
+  changeFrequency: null | string;
+  lastModified: null | string;
+  path: string;
+  priority: null | number;
+  slug: string;
+  url: string;
 }

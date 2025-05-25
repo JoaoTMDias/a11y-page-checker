@@ -1,22 +1,17 @@
-import { isNil } from "@jtmdias/js-utilities";
+import { isNil, throwError, wait } from "@jtmdias/js-utilities";
 import { Page, chromium, devices } from "@playwright/test";
-import { SitemapConfig, SitemapEntry } from "@/types";
+import { CrawlResult, SitemapEntry, WebsiteCrawlerConfig } from "@/types";
+import { WEBSITE_CRAWLER_DEFAULTS } from "./constants";
 
-interface WebsiteCrawlerConfig extends SitemapConfig {
-  baseUrl: string;
-  excludePatterns?: string[];
-  includePatterns?: string[];
-  maxDepth?: number;
-  maxPages?: number;
-}
+function getBaseConfig(config: WebsiteCrawlerConfig) {
+  if (!config.baseUrl) {
+    throwError("WebsiteCrawler", "getBaseConfig", "The target url needs to be defined.");
+  }
 
-interface CrawlResult {
-  changeFrequency: null | string;
-  lastModified: null | string;
-  path: string;
-  priority: null | number;
-  slug: string;
-  url: string;
+  return {
+    ...WEBSITE_CRAWLER_DEFAULTS,
+    ...config,
+  };
 }
 
 /**
@@ -38,25 +33,14 @@ export class WebsiteCrawler {
   private baseUrl: URL;
   private config: Required<WebsiteCrawlerConfig>;
   private queue: { depth: number; url: string }[] = [];
-  private results: CrawlResult[] = [];
   private visited = new Set<string>();
+  private results: SitemapEntry[] = [];
 
   /**
    * Creates a new instance of WebsiteCrawler.
    */
   constructor(config: WebsiteCrawlerConfig) {
-    this.config = {
-      baseUrl: config.baseUrl,
-      concurrent: config.concurrent || 2,
-      excludePatterns: config.excludePatterns || [],
-      includePatterns: config.includePatterns || [],
-      maxDepth: config.maxDepth || 3,
-      maxPages: config.maxPages || Number.POSITIVE_INFINITY,
-      maxRetries: config.maxRetries || 3,
-      timeout: config.timeout || 30_000,
-      waitForTimeout: config.waitForTimeout || 5000,
-    };
-
+    this.config = getBaseConfig(config);
     this.baseUrl = new URL(config.baseUrl);
   }
 
@@ -68,17 +52,17 @@ export class WebsiteCrawler {
    */
   async crawl(): Promise<SitemapEntry[]> {
     const browser = await chromium.launch();
-    const results: SitemapEntry[] = [];
+    this.results = [];
 
     try {
       // Create a pool of pages based on concurrent config
       const context = await browser.newContext(devices["Desktop Chrome"]);
       const concurrentPages = await Promise.all(
-        Array.from({ length: this.config.concurrent }).map(() => context.newPage())
+        Array.from({ length: this.config.concurrent }).map(() => context.newPage()),
       );
 
       // Initialize queue with base URL
-      const queueChunks = this.getInitialQueue();
+      const queueChunks = this.getInitialQueue(this.config.baseUrl, this.config.concurrent);
 
       // Process each chunk of URLs
       for (const chunk of queueChunks) {
@@ -107,18 +91,21 @@ export class WebsiteCrawler {
 
         // Wait for all URLs in current chunk to be processed
         const chunkResults = await Promise.all(crawlPromises);
-        results.push(...chunkResults.filter((r): r is SitemapEntry => r !== null));
+        this.results.push(...chunkResults.filter((r): r is SitemapEntry => r !== null));
 
         // Add delay between chunks to avoid overwhelming the server
         if (this.hasMoreUrlsToProcess()) {
           await wait(1000);
         }
       }
+    } catch (error) {
+      console.error("Crawling failed:", error);
+      throw error;
     } finally {
       await browser.close();
     }
 
-    return results;
+    return this.results;
   }
 
   /**
@@ -139,8 +126,12 @@ export class WebsiteCrawler {
         waitUntil: "networkidle",
       });
 
-      if (!response || response.status() !== 200) {
-        throw new Error(`Failed to load page: ${response?.status()}`);
+      if (!response) {
+        throw new Error(`Failed to load page: No response received`);
+      }
+
+      if (response.status() !== 200) {
+        throw new Error(`Failed to load page: HTTP ${response.status()}`);
       }
 
       // Wait for client-side rendering
@@ -151,10 +142,6 @@ export class WebsiteCrawler {
         await page.waitForTimeout(this.config.waitForTimeout);
       }
 
-      // Get links after everything has loaded
-      const links = await this.extractLinks(page);
-
-      // Add new links to queue if within depth limit
       return {
         changeFrequency: null,
         lastModified: timestamp,
@@ -183,19 +170,21 @@ export class WebsiteCrawler {
    * @param currentDepth Current crawl depth
    * @private
    */
-  private async discoverNewUrls(
-    page: Page,
-    currentUrl: string,
-    currentDepth: number
-  ): Promise<void> {
-    const links = await this.extractLinks(page);
-    const newLinks = links.filter((link) => !this.visited.has(link));
+  private async discoverNewUrls(page: Page, currentUrl: string, currentDepth: number): Promise<void> {
+    try {
+      const links = await this.extractLinks(page);
+      const newLinks = links.filter((link) => !this.visited.has(link));
 
-    for (const link of newLinks) {
-      this.queue.push({
-        depth: currentDepth + 1,
-        url: link,
-      });
+      for (const link of newLinks) {
+        if (this.isValidUrl(link)) {
+          this.queue.push({
+            depth: currentDepth + 1,
+            url: link,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to discover new URLs from ${currentUrl}:`, error);
     }
   }
 
@@ -207,36 +196,42 @@ export class WebsiteCrawler {
    * @private
    */
   private async extractLinks(page: Page): Promise<string[]> {
-    // Get all links from the page, including those added by JavaScript
-    const links = await page.evaluate(
-      () =>
-        [...document.querySelectorAll("a[href]")]
-          .map((a) => a.getAttribute("href"))
-          .filter((href) => !isNil(href)) as string[]
-    );
+    try {
+      // Get all links from the page, including those added by JavaScript
+      const links = await page.evaluate(
+        () =>
+          [...document.querySelectorAll("a[href]")]
+            .map((a) => a.getAttribute("href"))
+            .filter((href) => !isNil(href)) as string[],
+      );
 
-    // Resolve relative URLs and filter valid ones
-    return links
-      .map((link) => {
-        try {
-          return new URL(link, this.baseUrl).toString();
-        } catch {
-          return null;
-        }
-      })
-      .filter((url): url is string => url !== null && this.isValidUrl(url));
+      // Resolve relative URLs and filter valid ones
+      return links
+        .map((link) => {
+          try {
+            return new URL(link, this.baseUrl).toString();
+          } catch {
+            return null;
+          }
+        })
+        .filter((url): url is string => url !== null && this.isValidUrl(url));
+    } catch (error) {
+      console.error("Failed to extract links:", error);
+      return [];
+    }
   }
 
   /**
    * Gets the initial queue of URLs chunked for concurrent processing
+   *
    * @returns Array of URL chunks
    * @private
    */
-  private *getInitialQueue() {
-    this.queue = [{ depth: 0, url: this.config.baseUrl }];
+  private *getInitialQueue(url: string, concurrency: number) {
+    this.queue = [{ depth: 0, url }];
 
     while (this.queue.length > 0) {
-      yield this.queue.splice(0, this.config.concurrent);
+      yield this.queue.splice(0, concurrency);
     }
   }
 

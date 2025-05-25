@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accessibility Page Checker - A tool to help you check and improve your website's accessibility">
+    <title>Accessibility Page Checker</title>
+    <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+    <header>
+        <nav aria-label="Main navigation">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Accessibility Page Checker</h1>
+        <section aria-labelledby="checker-section">
+            <h2 id="checker-section">Check Your Page's Accessibility</h2>
+            <form id="url-checker" aria-label="URL input form">
+                <label for="url-input">Enter your website URL:</label>
+                <input
+                    type="url"
+                    id="url-input"
+                    name="url"
+                    placeholder="https://example.com"
+                    required
+                    aria-required="true"
+                >
+                <button type="submit">Check Accessibility</button>
+            </form>
+        </section>
+
+        <section aria-labelledby="results-section">
+            <h2 id="results-section">Results</h2>
+            <div id="results-container" aria-live="polite">
+                <!-- Results will be displayed here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Accessibility Page Checker. All rights reserved.</p>
+    </footer>
+</body>
+</html>

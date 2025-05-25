@@ -1,7 +1,9 @@
 /* eslint-disable no-await-in-loop */
 import { AxeBuilder } from "@axe-core/playwright";
 import { Page, chromium, devices } from "@playwright/test";
-import { SitemapConfig, TestResults } from "@/types";
+import { SitemapConfig, TestResults, ProcessChunksProps } from "@/types";
+import chalk from "chalk";
+import { chunk } from "@jtmdias/js-utilities";
 
 /**
  * AccessibilityTester is responsible for running accessibility tests on web pages
@@ -44,6 +46,82 @@ export class AccessibilityTester {
   }
 
   /**
+   * Tests accessibility for a single URL using a provided Playwright page.
+   */
+  private async testUrl(url: string, page: Page): Promise<TestResults["violations"][0]> {
+    try {
+      console.log(chalk.bgBlue(chalk.white(`Checking ${url}...`)));
+
+      // Navigate to the page and wait for it to load
+      await page.goto(url, {
+        timeout: this.config.timeout,
+        waitUntil: "networkidle",
+      });
+
+      await page.waitForLoadState("domcontentloaded");
+
+      if (this.config.waitForTimeout) {
+        await new Promise((t) => {
+          setTimeout(t, this.config.waitForTimeout);
+        });
+      }
+
+      // Run accessibility tests using Axe
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      return {
+        timestamp: new Date().toISOString(),
+        url,
+        violations: accessibilityScanResults.violations,
+      };
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+        url,
+      };
+    }
+  }
+
+  /**
+   * Process URLs in chunks
+   *
+   * @param param0
+   * @returns
+   */
+  private async processChunks({ urls, concurrent, concurrentPages, results }: ProcessChunksProps) {
+    const chunks = chunk(urls, concurrent);
+    const processedResults = {
+      ...results,
+    };
+
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      const chunkResults = await Promise.all(chunk.map((url, index) => this.testUrl(url, concurrentPages[index])));
+
+      processedResults.violations.push(...chunkResults);
+
+      // Update summary
+      const violationsInChunk = chunkResults.filter((r) => r.violations && r.violations.length > 0);
+      processedResults.summary.pagesWithViolations += violationsInChunk.length;
+      processedResults.summary.totalViolations += violationsInChunk.reduce(
+        (sum, r) => sum + (r.violations?.length || 0),
+        0,
+      );
+
+      // Optional delay between chunks, except for the last chunk
+      if (chunkIndex < chunks.length - 1) {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 1000);
+        });
+      }
+    }
+
+    return processedResults;
+  }
+
+  /**
    * Tests accessibility for an array of URLs.
    *
    * @param {string[]} urls - Array of URLs to test
@@ -78,84 +156,19 @@ export class AccessibilityTester {
         Array.from({ length: this.config.concurrent }).map(async () => {
           const context = await browser.newContext(devices["Desktop Chrome"]);
           return context.newPage();
-        })
+        }),
       );
 
-      // Process URLs in chunks
-      const processChunks = async () => {
-        const chunks = [];
-        for (let i = 0; i < urls.length; i += this.config.concurrent) {
-          chunks.push(urls.slice(i, i + this.config.concurrent));
-        }
-
-        for (const [chunkIndex, chunk] of chunks.entries()) {
-          const chunkResults = await Promise.all(
-            chunk.map((url, index) => this.testUrl(url, concurrentPages[index]))
-          );
-
-          results.violations.push(...chunkResults);
-
-          // Update summary
-          const violationsInChunk = chunkResults.filter(
-            (r) => r.violations && r.violations.length > 0
-          );
-          results.summary.pagesWithViolations += violationsInChunk.length;
-          results.summary.totalViolations += violationsInChunk.reduce(
-            (sum, r) => sum + (r.violations?.length || 0),
-            0
-          );
-
-          // Optional delay between chunks, except for the last chunk
-          if (chunkIndex < chunks.length - 1) {
-            await new Promise((resolve) => {
-              setTimeout(resolve, 1000);
-            });
-          }
-        }
-      };
-
-      await processChunks();
-      return results;
-    } finally {
-      await browser.close();
-    }
-  }
-
-  /**
-   * Tests accessibility for a single URL using a provided Playwright page.
-   */
-  private async testUrl(url: string, page: Page): Promise<TestResults["violations"][0]> {
-    try {
-      // Navigate to the page and wait for it to load
-      await page.goto(url, {
-        timeout: this.config.timeout,
-        waitUntil: "networkidle",
+      const processedResults = await this.processChunks({
+        urls,
+        concurrent: this.config.concurrent,
+        concurrentPages,
+        results,
       });
 
-      await page.waitForLoadState("domcontentloaded");
-
-      if (this.config.waitForTimeout) {
-        await new Promise((t) => {
-          setTimeout(t, this.config.waitForTimeout);
-        });
-      }
-
-      // Run accessibility tests using Axe
-      const accessibilityScanResults = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-        .analyze();
-
-      return {
-        timestamp: new Date().toISOString(),
-        url,
-        violations: accessibilityScanResults.violations,
-      };
-    } catch (error) {
-      return {
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-        url,
-      };
+      return processedResults;
+    } finally {
+      await browser.close();
     }
   }
 }
