@@ -1,18 +1,11 @@
-import { isNil, throwError, wait } from "@jtmdias/js-utilities";
+import { wait } from "@jtmdias/js-utilities";
 import { Page, chromium, devices } from "@playwright/test";
-import { CrawlResult, SitemapEntry, WebsiteCrawlerConfig } from "@/types";
+import { SitemapEntry, WebsiteCrawlerConfig } from "@/types";
 import { WEBSITE_CRAWLER_DEFAULTS } from "./constants";
-
-function getBaseConfig(config: WebsiteCrawlerConfig) {
-  if (!config.baseUrl) {
-    throwError("WebsiteCrawler", "getBaseConfig", "The target url needs to be defined.");
-  }
-
-  return {
-    ...WEBSITE_CRAWLER_DEFAULTS,
-    ...config,
-  };
-}
+import { WebsiteCrawlerError } from "./website-crawler-error";
+import { UrlProcessor } from "./url-processor";
+import { LinkExtractor } from "./link-extractor";
+import { PageCrawler } from "./page-crawler";
 
 /**
  * WebsiteCrawler is responsible for discovering pages on a website,
@@ -30,58 +23,96 @@ function getBaseConfig(config: WebsiteCrawlerConfig) {
  * ```
  */
 export class WebsiteCrawler {
-  private baseUrl: URL;
-  private config: Required<WebsiteCrawlerConfig>;
+  private readonly urlProcessor: UrlProcessor;
+  private readonly linkExtractor: LinkExtractor;
+  private readonly pageCrawler: PageCrawler;
   private queue: { depth: number; url: string }[] = [];
   private visited = new Set<string>();
   private results: SitemapEntry[] = [];
+  private readonly config: Required<WebsiteCrawlerConfig>;
+  private startTime: number = 0;
+  private redirectCount: Map<string, number> = new Map();
+  private readonly MAX_REDIRECTS = 5;
+  private readonly MAX_CRAWL_TIME = 5 * 60 * 1000; // 5 minutes
 
-  /**
-   * Creates a new instance of WebsiteCrawler.
-   */
-  constructor(config: WebsiteCrawlerConfig) {
-    this.config = getBaseConfig(config);
-    this.baseUrl = new URL(config.baseUrl);
+  constructor(userConfig: WebsiteCrawlerConfig) {
+    if (!userConfig.baseUrl) {
+      throw new WebsiteCrawlerError("The target url needs to be defined.", "INVALID_CONFIG");
+    }
+
+    this.config = {
+      ...WEBSITE_CRAWLER_DEFAULTS,
+      ...userConfig,
+      excludePatterns: userConfig.excludePatterns ?? WEBSITE_CRAWLER_DEFAULTS.excludePatterns,
+      includePatterns: userConfig.includePatterns ?? WEBSITE_CRAWLER_DEFAULTS.includePatterns,
+    };
+
+    this.urlProcessor = new UrlProcessor(new URL(userConfig.baseUrl));
+    this.linkExtractor = new LinkExtractor(this.urlProcessor);
+    this.pageCrawler = new PageCrawler(this.config, this.urlProcessor);
   }
 
   /**
    * Starts the crawling process from the base URL.
    *
    * @returns {Promise<SitemapEntry[]>} Array of discovered pages
-   * @throws {Error} If browser launching fails
+   * @throws {WebsiteCrawlerError} If crawling fails
    */
   async crawl(): Promise<SitemapEntry[]> {
-    const browser = await chromium.launch();
+    const browser = await chromium.launch({
+      args: ["--disable-gpu", "--disable-dev-shm-usage", "--disable-setuid-sandbox", "--no-sandbox"],
+    });
     this.results = [];
+    this.startTime = Date.now();
+    this.redirectCount.clear();
 
     try {
-      // Create a pool of pages based on concurrent config
-      const context = await browser.newContext(devices["Desktop Chrome"]);
+      const context = await browser.newContext({
+        ...devices["Desktop Chrome"],
+        userAgent: "Mozilla/5.0 (compatible; WebsiteCrawler/1.0; +https://github.com/your-repo)",
+        viewport: { width: 1280, height: 800 },
+        deviceScaleFactor: 1,
+        isMobile: false,
+        hasTouch: false,
+        javaScriptEnabled: true,
+      });
+
+      context.setDefaultTimeout(this.config.timeout);
+
       const concurrentPages = await Promise.all(
         Array.from({ length: this.config.concurrent }).map(() => context.newPage()),
       );
 
-      // Initialize queue with base URL
       const queueChunks = this.getInitialQueue(this.config.baseUrl, this.config.concurrent);
 
-      // Process each chunk of URLs
       for (const chunk of queueChunks) {
-        // Skip processing if we've reached the maximum pages
+        if (Date.now() - this.startTime > this.MAX_CRAWL_TIME) {
+          console.warn("Maximum crawl time exceeded. Stopping crawl.");
+          break;
+        }
+
         if (this.results.length >= this.config.maxPages) {
           break;
         }
 
-        // Process current chunk of URLs concurrently
         const crawlPromises = chunk.map(async ({ depth, url }, index) => {
-          // Skip already visited URLs
           if (this.visited.has(url)) {
             return null;
           }
 
-          this.visited.add(url);
-          const result = await this.crawlPage(concurrentPages[index], url);
+          const redirects = this.redirectCount.get(url) || 0;
+          if (redirects >= this.MAX_REDIRECTS) {
+            console.warn(`Too many redirects for ${url}. Skipping.`);
+            return null;
+          }
 
-          // Discover new URLs if we haven't reached max depth
+          this.visited.add(url);
+          const result = await this.pageCrawler.crawlPage(concurrentPages[index], url);
+
+          if (result.url !== url) {
+            this.redirectCount.set(result.url, redirects + 1);
+          }
+
           if (depth < this.config.maxDepth) {
             await this.discoverNewUrls(concurrentPages[index], url, depth);
           }
@@ -89,18 +120,16 @@ export class WebsiteCrawler {
           return result;
         });
 
-        // Wait for all URLs in current chunk to be processed
         const chunkResults = await Promise.all(crawlPromises);
         this.results.push(...chunkResults.filter((r): r is SitemapEntry => r !== null));
 
-        // Add delay between chunks to avoid overwhelming the server
         if (this.hasMoreUrlsToProcess()) {
           await wait(1000);
         }
       }
     } catch (error) {
       console.error("Crawling failed:", error);
-      throw error;
+      throw new WebsiteCrawlerError(error instanceof Error ? error.message : "Unknown error occurred", "CRAWL_FAILED");
     } finally {
       await browser.close();
     }
@@ -108,75 +137,16 @@ export class WebsiteCrawler {
     return this.results;
   }
 
-  /**
-   * Crawls a single page and extracts its information.
-   *
-   * @param {Page} page - Playwright page object
-   * @param {string} url - URL to crawl
-   * @returns {Promise<CrawlResult>} Page crawl results
-   * @private
-   */
-  private async crawlPage(page: Page, url: string): Promise<CrawlResult> {
-    const timestamp = new Date().toISOString();
-    const urlObj = new URL(url);
-
-    try {
-      const response = await page.goto(url, {
-        timeout: this.config.timeout,
-        waitUntil: "networkidle",
-      });
-
-      if (!response) {
-        throw new Error(`Failed to load page: No response received`);
-      }
-
-      if (response.status() !== 200) {
-        throw new Error(`Failed to load page: HTTP ${response.status()}`);
-      }
-
-      // Wait for client-side rendering
-      await page.waitForLoadState("domcontentloaded");
-
-      // Allow time for SPA routing and dynamic content
-      if (this.config.waitForTimeout) {
-        await page.waitForTimeout(this.config.waitForTimeout);
-      }
-
-      return {
-        changeFrequency: null,
-        lastModified: timestamp,
-        path: urlObj.pathname,
-        priority: null,
-        slug: urlObj.pathname.split("/").filter(Boolean).pop() || "",
-        url,
-      };
-    } catch (error) {
-      console.error(`Failed to crawl ${url}:`, error);
-      return {
-        changeFrequency: null,
-        lastModified: timestamp,
-        path: urlObj.pathname,
-        priority: null,
-        slug: urlObj.pathname.split("/").filter(Boolean).pop() || "",
-        url,
-      };
-    }
-  }
-
-  /**
-   * Discovers new URLs from the current page and adds them to the queue
-   * @param page Playwright page object
-   * @param currentUrl Current URL being processed
-   * @param currentDepth Current crawl depth
-   * @private
-   */
   private async discoverNewUrls(page: Page, currentUrl: string, currentDepth: number): Promise<void> {
     try {
-      const links = await this.extractLinks(page);
+      const links = await this.linkExtractor.extractLinks(page);
       const newLinks = links.filter((link) => !this.visited.has(link));
 
-      for (const link of newLinks) {
-        if (this.isValidUrl(link)) {
+      const maxNewLinks = Math.min(newLinks.length, this.config.maxPages - this.results.length);
+
+      for (let i = 0; i < maxNewLinks; i++) {
+        const link = newLinks[i];
+        if (this.urlProcessor.isValidUrl(link)) {
           this.queue.push({
             depth: currentDepth + 1,
             url: link,
@@ -188,45 +158,6 @@ export class WebsiteCrawler {
     }
   }
 
-  /**
-   * Extracts all links from a page, including those added by JavaScript.
-   *
-   * @param {Page} page - Playwright page object
-   * @returns {Promise<string[]>} Array of discovered URLs
-   * @private
-   */
-  private async extractLinks(page: Page): Promise<string[]> {
-    try {
-      // Get all links from the page, including those added by JavaScript
-      const links = await page.evaluate(
-        () =>
-          [...document.querySelectorAll("a[href]")]
-            .map((a) => a.getAttribute("href"))
-            .filter((href) => !isNil(href)) as string[],
-      );
-
-      // Resolve relative URLs and filter valid ones
-      return links
-        .map((link) => {
-          try {
-            return new URL(link, this.baseUrl).toString();
-          } catch {
-            return null;
-          }
-        })
-        .filter((url): url is string => url !== null && this.isValidUrl(url));
-    } catch (error) {
-      console.error("Failed to extract links:", error);
-      return [];
-    }
-  }
-
-  /**
-   * Gets the initial queue of URLs chunked for concurrent processing
-   *
-   * @returns Array of URL chunks
-   * @private
-   */
   private *getInitialQueue(url: string, concurrency: number) {
     this.queue = [{ depth: 0, url }];
 
@@ -235,44 +166,7 @@ export class WebsiteCrawler {
     }
   }
 
-  /**
-   * Checks if there are more URLs to process
-   * @returns boolean indicating if more URLs exist
-   * @private
-   */
   private hasMoreUrlsToProcess(): boolean {
     return this.queue.length > 0;
-  }
-
-  /**
-   * Checks if a URL is valid and should be crawled based on configuration.
-   *
-   * @param {string} url - URL to validate
-   * @returns {boolean} Whether the URL should be crawled
-   * @private
-   */
-  private isValidUrl(url: string): boolean {
-    try {
-      const parsedUrl = new URL(url);
-
-      // Check if URL belongs to the same domain
-      if (parsedUrl.hostname !== this.baseUrl.hostname) {
-        return false;
-      }
-
-      // Check against exclude patterns
-      if (this.config.excludePatterns?.some((pattern) => url.match(new RegExp(pattern)))) {
-        return false;
-      }
-
-      // Check against include patterns
-      if (this.config.includePatterns?.length) {
-        return this.config.includePatterns.some((pattern) => url.match(new RegExp(pattern)));
-      }
-
-      return true;
-    } catch {
-      return false;
-    }
   }
 }

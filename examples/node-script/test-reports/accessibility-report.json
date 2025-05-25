@@ -1,13 +1,13 @@
 {
   "summary": {
-    "completedAt": "2025-05-25T13:00:37.312Z",
+    "completedAt": "2025-05-25T14:21:18.482Z",
     "pagesWithViolations": 10,
     "totalPages": 10,
     "totalViolations": 14
   },
   "violations": [
     {
-      "timestamp": "2025-05-25T13:00:49.348Z",
+      "timestamp": "2025-05-25T14:21:30.510Z",
       "url": "https://www.feedzai.com/",
       "violations": [
         {
@@ -415,7 +415,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:00:39.269Z",
+      "timestamp": "2025-05-25T14:21:20.392Z",
       "url": "https://www.feedzai.com/about-us/",
       "violations": [
         {
@@ -744,7 +744,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:00:51.729Z",
+      "timestamp": "2025-05-25T14:21:33.026Z",
       "url": "https://www.feedzai.com/solutions/ai/",
       "violations": [
         {
@@ -1073,7 +1073,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:00:52.759Z",
+      "timestamp": "2025-05-25T14:21:33.113Z",
       "url": "https://www.feedzai.com/blog/",
       "violations": [
         {
@@ -1402,7 +1402,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:00:55.137Z",
+      "timestamp": "2025-05-25T14:21:35.463Z",
       "url": "https://www.feedzai.com/contact-us/",
       "violations": [
         {
@@ -1731,7 +1731,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:01:05.159Z",
+      "timestamp": "2025-05-25T14:21:45.656Z",
       "url": "https://www.feedzai.com/es/",
       "violations": [
         {
@@ -2139,7 +2139,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:01:17.637Z",
+      "timestamp": "2025-05-25T14:21:58.095Z",
       "url": "https://www.feedzai.com/pt-br/",
       "violations": [
         {
@@ -2547,7 +2547,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:01:07.683Z",
+      "timestamp": "2025-05-25T14:21:48.077Z",
       "url": "https://www.feedzai.com/fr/",
       "violations": [
         {
@@ -2826,7 +2826,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:01:20.693Z",
+      "timestamp": "2025-05-25T14:22:01.298Z",
       "url": "https://www.feedzai.com/legal/privacy-notice/",
       "violations": [
         {
@@ -3155,7 +3155,7 @@
       ]
     },
     {
-      "timestamp": "2025-05-25T13:01:20.153Z",
+      "timestamp": "2025-05-25T14:22:00.747Z",
       "url": "https://www.feedzai.com/insights/",
       "violations": [
         {

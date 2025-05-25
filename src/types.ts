@@ -8,13 +8,23 @@ export interface SitemapConfig {
   waitForTimeout?: number;
 }
 
+/**
+ * Represents a single entry in a sitemap.
+ * Only the url field is required, all other fields are optional.
+ */
 export interface SitemapEntry {
-  changeFrequency: null | string;
-  lastModified: null | string;
-  path: string;
-  priority: null | number;
-  slug: string;
+  /** The absolute URL of the page (required) */
   url: string;
+  /** The path part of the URL (required) */
+  path: string;
+  /** When the page was last modified (optional) */
+  lastModified?: string;
+  /** How frequently the page is likely to change (optional) */
+  changeFrequency?: string;
+  /** Priority of this URL relative to other URLs (optional, 0.0 to 1.0) */
+  priority?: number;
+  /** The last part of the URL path (optional) */
+  slug?: string;
 }
 
 export interface AccessibilityViolation {
