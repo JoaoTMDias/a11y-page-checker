@@ -2,6 +2,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { TestResults } from "@/types";
 import { generateHtml } from "@/core/report-generator/helpers";
+import { isArray } from "@jtmdias/js-utilities";
+
+type TypeOfReport = "html" | "json" | "table";
+interface GenerateReportResults {
+  html: boolean;
+  json: boolean;
+  table: boolean;
+}
 
 /**
  * ReportGenerator creates formatted reports from accessibility test results.
@@ -30,10 +38,18 @@ export class ReportGenerator {
    *
    * @private
    */
-  public async generateHtmlReport(results: TestResults, outputPath: string): Promise<void> {
-    const htmlContent = generateHtml(results);
-    const htmlPath = path.join(outputPath, "accessibility-report.html");
-    await fs.writeFile(htmlPath, htmlContent);
+  private async _generateHtmlReport(results: TestResults, outputPath: string): Promise<boolean> {
+    try {
+      const htmlContent = generateHtml(results);
+      const htmlPath = path.join(outputPath, "accessibility-report.html");
+      await fs.writeFile(htmlPath, htmlContent);
+
+      return true;
+    } catch (error) {
+      console.error(error);
+
+      return false;
+    }
   }
 
   /**
@@ -47,9 +63,25 @@ export class ReportGenerator {
    *
    * @private
    */
-  public async generateJsonReport(results: TestResults, outputPath: string): Promise<void> {
-    const JSON_PATH = path.join(outputPath, "accessibility-report.json");
-    await fs.writeFile(JSON_PATH, JSON.stringify(results, null, 2));
+  private async _generateJsonReport(results: TestResults, outputPath: string): Promise<boolean> {
+    try {
+      const JSON_PATH = path.join(outputPath, "accessibility-report.json");
+      await fs.writeFile(JSON_PATH, JSON.stringify(results, null, 2));
+
+      return true;
+    } catch (error) {
+      console.error(error);
+
+      return false;
+    }
+  }
+
+  private async _setupOutputFolder(outputPath: string) {
+    try {
+      await fs.mkdir(outputPath, { recursive: true });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   /**
@@ -67,13 +99,37 @@ export class ReportGenerator {
    * await reporter.generateReport(results, './reports');
    * ```
    */
-  async generateReport(results: TestResults, outputPath: string): Promise<void> {
-    await fs.mkdir(outputPath, { recursive: true });
+  async generateReport({
+    type = "json",
+    results,
+    outputPath,
+  }: {
+    type: TypeOfReport | TypeOfReport[];
+    results: TestResults;
+    outputPath: string;
+  }): Promise<GenerateReportResults> {
+    await this._setupOutputFolder(outputPath);
 
-    // Generate JSON report
-    await this.generateJsonReport(results, outputPath);
+    const generatorMap = {
+      html: this._generateHtmlReport,
+      json: this._generateJsonReport,
+      table: this._generateJsonReport,
+    };
 
-    // Generate HTML report
-    await this.generateHtmlReport(results, outputPath);
+    let reportResults = {
+      html: false,
+      json: false,
+      table: false,
+    };
+
+    if (isArray(type)) {
+      for await (const typeOfReport of type) {
+        reportResults[typeOfReport] = await generatorMap[typeOfReport](results, outputPath);
+      }
+    } else {
+      reportResults[type] = await generatorMap[type](results, outputPath);
+    }
+
+    return reportResults;
   }
 }
