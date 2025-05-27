@@ -30,6 +30,7 @@
   "dependencies": {
     "@axe-core/playwright": "^4.10.1",
     "@jtmdias/js-utilities": "^3.0.0",
+    "@minify-html/node": "^0.16.4",
     "@playwright/test": "^1.50.1",
     "axe-core": "^4.10.2",
     "chalk": "^5.4.1",

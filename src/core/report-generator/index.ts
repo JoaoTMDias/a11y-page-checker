@@ -1,10 +1,12 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { Buffer } from "node:buffer";
+import minifyHtml from "@minify-html/node";
 import { TestResults } from "@/types";
 import { generateHtml } from "@/core/report-generator/helpers";
 import { isArray } from "@jtmdias/js-utilities";
 
-type TypeOfReport = "html" | "json" | "table";
+export type TypeOfReport = "html" | "json" | "table";
 interface GenerateReportResults {
   html: boolean;
   json: boolean;
@@ -41,8 +43,11 @@ export class ReportGenerator {
   private async _generateHtmlReport(results: TestResults, outputPath: string): Promise<boolean> {
     try {
       const htmlContent = generateHtml(results);
+      const minified = minifyHtml.minify(Buffer.from(htmlContent), {
+        keep_comments: false,
+      });
       const htmlPath = path.join(outputPath, "accessibility-report.html");
-      await fs.writeFile(htmlPath, htmlContent);
+      await fs.writeFile(htmlPath, minified);
 
       return true;
     } catch (error) {
