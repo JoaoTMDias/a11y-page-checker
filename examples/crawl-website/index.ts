@@ -7,10 +7,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function main() {
+  const baseUrl = process.argv[2];
+
+  if (!baseUrl) {
+    console.error("Please provide a base URL as a command line argument");
+    console.error("Example: npm run crawl https://www.example.com");
+    process.exit(1);
+  }
+
+  if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+    console.error("Please provide a valid URL starting with http:// or https://");
+    process.exit(1);
+  }
+
   try {
     // Initialize the crawler with configuration
     const crawler = new WebsiteCrawler({
-      baseUrl: "https://www.sandrina-p.net/",
+      baseUrl,
       maxDepth: 3, // Maximum depth to crawl
       concurrent: 3, // Number of concurrent pages to crawl
       timeout: 30000, // 30 seconds timeout for each page
@@ -18,7 +31,7 @@ async function main() {
       waitForTimeout: 1000, // Wait 1 second after page load for dynamic content
       excludePatterns: [
         // Exclude common patterns that might not be actual pages
-        "\\.(jpg|jpeg|png|gif|svg|css|js|pdf|doc|docx|xls|xlsx|ppt|pptx)$",
+        ".*\\.(jpg|jpeg|png|gif|svg|css|js|pdf|doc|docx|xls|xlsx|ppt|pptx)$",
         "mailto:", // Exclude email links
         "tel:", // Exclude phone numbers
         "#", // Exclude anchor links
@@ -35,21 +48,21 @@ async function main() {
       ],
     });
 
-    console.log("Starting to crawl https://www.sandrina-p.net/...");
+    console.log(`Starting to crawl ${baseUrl}...`);
     console.log("This might take a while depending on the site size...\n");
 
     // Start the crawling process
-    const pages = await crawler.crawl();
+    const crawledPages = await crawler.crawl();
 
     // Print results
     console.log("\nCrawling completed!");
-    console.log(`Found ${pages.length} pages:\n`);
+    console.log(`Found ${crawledPages.length} pages:\n`);
 
     // Sort pages by path for better readability
-    pages.sort((a, b) => a.path.localeCompare(b.path));
+    const sortedPages = crawledPages.sort((a, b) => a.path.localeCompare(b.path));
 
     console.table(
-      pages.map(({ url, path, lastModified, slug }) => ({
+      sortedPages.map(({ url, path, lastModified, slug }) => ({
         url,
         path,
         lastModified,
@@ -63,7 +76,7 @@ async function main() {
     }
 
     const outputPath = path.join(outputDir, "crawl-results.json");
-    fs.writeFileSync(outputPath, JSON.stringify(pages, null, 2), "utf-8");
+    fs.writeFileSync(outputPath, JSON.stringify({ urls: sortedPages }, null, 2), "utf-8");
 
     console.log(`\nResults have been saved to: ${outputPath}`);
   } catch (error) {
