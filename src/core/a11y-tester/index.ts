@@ -117,7 +117,7 @@ export class AccessibilityTester {
   private _createOutputList(data: Result[]) {
     return data
       .map((item) => {
-        return `* [${item.impact}] - ${item.impact}`;
+        return `* [${item.impact}] - ${item.description}`;
       })
       .join("\n");
   }
