@@ -243,11 +243,15 @@ export class SitemapCrawler {
    */
   private async readContent(pathOrUrl: string): Promise<string> {
     try {
-      new URL(pathOrUrl); // Validate URL
-      const response = await fetchWithTimeout(pathOrUrl, {
-        timeout: this.config.timeout,
-      });
-      return response.text();
+      if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+        const url = new URL(pathOrUrl);
+        const response = await fetchWithTimeout(url, {
+          timeout: this.config.timeout,
+        });
+        return response.text();
+      }
+
+      return await readFile(pathOrUrl, "utf-8");
     } catch (error) {
       if (error instanceof SitemapCrawlerError) {
         throw error;
