@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 import { AccessibilityTester, ReportGenerator, SitemapCrawler } from "../../src/core/index.ts";
 import { isArray, isEmpty, isNil, throwError } from "@jtmdias/js-utilities";
 import { SitemapEntry, TestResults } from "@/types.ts";
+import { TypeOfReport } from "@/core/report-generator/index.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const EXAMPLE_SITEMAP = path.join(__dirname, "../sitemap.xml");
+const EXAMPLE_SITEMAP = path.join(__dirname, "../psd.json");
 const OUTPUT_DIR = path.join(__dirname, "output");
 
 // Initialize the core classes
@@ -54,10 +55,10 @@ async function auditPages(pages: SitemapEntry[]) {
 /**
  * After peforming the audit, tries to generate a readable report.
  */
-async function generateReport(results: TestResults) {
+async function generateReport(results: TestResults, type: TypeOfReport | TypeOfReport[] = ["html", "json"]) {
   try {
     const generatedReportResults = await Generator.generateReport({
-      type: "json",
+      type,
       results: results,
       outputPath: OUTPUT_DIR,
     });
