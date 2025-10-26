@@ -40,7 +40,7 @@ async function auditPages(pages: SitemapEntry[]) {
     console.log(chalk.bgBlue(chalk.white(`Performing tests on ${pages.length} pages...`)));
 
     const urls = pages.map((page) => page.url);
-    const results = await A11yTester.testUrls(urls, true);
+    const results = await A11yTester.testUrls(urls);
 
     if (!results) {
       throwError("a11y-page-checker", "auditPages", "There were no results from the audit. Please try again.");
