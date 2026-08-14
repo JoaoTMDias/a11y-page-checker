@@ -1,6 +1,90 @@
 import { Page } from "@playwright/test";
 import { Result } from "axe-core";
 
+export type Severity = "critical" | "serious" | "moderate" | "minor";
+
+export type InputSource =
+  | { type: "sitemap"; url: string }
+  | { type: "crawl"; seedUrl: string; maxDepth?: number; maxPages?: number }
+  | { type: "urls"; targets: string[] }
+  | { type: "files"; glob: string[] };
+
+export type DOMAction =
+  | { type: "click"; selector: string }
+  | { type: "wait"; selectorOrMs: string | number }
+  | { type: "fill"; selector: string; value: string };
+
+export interface ScanOptions {
+  maxConcurrency?: number;
+  viewport?: { width: number; height: number };
+}
+
+export interface PageTarget {
+  url: string;
+  name?: string;
+  /** Optional interactive pre-conditions executed via Playwright before running axe-core */
+  actions?: DOMAction[];
+  /** Overrides global rule settings for this target */
+  rules?: Record<string, { enabled: boolean }>;
+}
+
+export interface ScanPlan {
+  name?: string;
+  source: InputSource;
+  include?: string[];
+  exclude?: string[];
+  options?: ScanOptions;
+  targets?: PageTarget[];
+}
+
+export interface FindingNode {
+  html: string;
+  target: string[];
+  failureSummary?: string;
+}
+
+export interface Finding {
+  id: string;
+  impact: Severity;
+  tags: string[];
+  description: string;
+  help: string;
+  helpUrl: string;
+  nodes: FindingNode[];
+}
+
+export interface ScanResult {
+  summary: {
+    duration: number;
+    pagesScanned: number;
+    totalFindings: number;
+  };
+  urlResults: Array<{
+    url: string;
+    findings: Finding[];
+    error?: string;
+  }>;
+}
+
+export interface ProgressEventPayload {
+  url: string;
+  step: "fetch" | "scan";
+}
+
+export interface PageDoneEventPayload {
+  url: string;
+  findingsCount: number;
+}
+
+export interface ErrorEventPayload {
+  url?: string;
+  error: Error;
+}
+
+export interface DoneEventPayload {
+  summary: ScanResult["summary"];
+}
+
 export interface SitemapConfig {
   concurrent?: number;
   maxRetries?: number;
