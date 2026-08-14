@@ -1,44 +1,9 @@
 {
-  "name": "a11y-page-checker",
+  "name": "a11y-page-checker-workspace",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "packageManager": "pnpm@11.21.0",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint src --ext .ts",
-    "posttest": "npm run lint",
-    "example-node": "tsx ./examples/node-script/index.ts",
-    "example-crawl-website": "tsx ./examples/crawl-website/index.ts",
-    "test:example:node-script": "start-server-and-test dev http://localhost:5173 crawl-example",
-    "bundle-visualizer": "vite-bundle-visualizer"
-  },
-  "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^24.0.0",
-    "@types/xml2js": "^0.4.14",
-    "shx": "^0.4.0",
-    "tsx": "^4.19.4",
-    "typescript": "~5.8.3",
-    "vite": "^6.3.5",
-    "vite-bundle-visualizer": "^1.2.1",
-    "vite-plugin-dts": "^4.5.4",
-    "vite-plugin-istanbul": "^7.0.0",
-    "vite-plugin-static-copy": "^3.0.0",
-    "vite-tsconfig-paths": "^5.1.4"
-  },
-  "dependencies": {
-    "@axe-core/playwright": "^4.10.2",
-    "@jtmdias/js-utilities": "^3.0.0",
-    "@minify-html/node": "^0.16.4",
-    "@playwright/test": "^1.53.0",
-    "axe-core": "^4.10.3",
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0",
-    "handlebars": "^4.7.8",
-    "ink": "^6.0.0",
-    "react": "^19.1.0",
-    "xml2js": "^0.6.2",
-    "yaml": "^2.8.0"
+    "build": "pnpm --filter @a11y-page-checker/core run build",
+    "test": "pnpm --filter @a11y-page-checker/core run test"
   }
 }
