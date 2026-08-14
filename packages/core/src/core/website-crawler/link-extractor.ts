@@ -1,6 +1,5 @@
 import { Page } from "@playwright/test";
 import { UrlProcessor } from "./url-processor";
-import { isNil } from "@jtmdias/js-utilities";
 
 /**
  * LinkExtractor is responsible for extracting links from a page.

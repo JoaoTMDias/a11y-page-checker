@@ -1,6 +1,6 @@
 import { wait } from "@jtmdias/js-utilities";
 import { Page, chromium, devices } from "@playwright/test";
-import { SitemapEntry, WebsiteCrawlerConfig } from "@/types";
+import { CrawlResult, SitemapEntry, WebsiteCrawlerConfig } from "@/types";
 import { WEBSITE_CRAWLER_DEFAULTS } from "./constants";
 import { WebsiteCrawlerError } from "./website-crawler-error";
 import { UrlProcessor } from "./url-processor";
@@ -49,7 +49,7 @@ export class WebsiteCrawler {
 
     this.urlProcessor = new UrlProcessor(new URL(userConfig.baseUrl));
     this.linkExtractor = new LinkExtractor(this.urlProcessor);
-    this.pageCrawler = new PageCrawler(this.config, this.urlProcessor);
+    this.pageCrawler = new PageCrawler(this.config);
   }
 
   /**
@@ -121,7 +121,16 @@ export class WebsiteCrawler {
         });
 
         const chunkResults = await Promise.all(crawlPromises);
-        this.results.push(...chunkResults.filter((r): r is SitemapEntry => r !== null));
+        this.results.push(
+          ...chunkResults
+            .filter((result): result is CrawlResult => result !== null)
+            .map(({ changeFrequency, lastModified, priority, ...result }) => ({
+              ...result,
+              changeFrequency: changeFrequency ?? undefined,
+              lastModified: lastModified ?? undefined,
+              priority: priority ?? undefined,
+            })),
+        );
 
         if (this.hasMoreUrlsToProcess()) {
           await wait(1000);

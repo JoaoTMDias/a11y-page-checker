@@ -1,21 +1,20 @@
 import { CrawlResult, WebsiteCrawlerConfig } from "@/types";
 import { WebsiteCrawlerError } from "./website-crawler-error";
 import { Page } from "@playwright/test";
-import { UrlProcessor } from "./url-processor";
 
 /**
  * PageCrawler is responsible for crawling a page and extracting the necessary information.
  *
  * @example
  * ```typescript
- * const pageCrawler = new PageCrawler(config, urlProcessor);
+ * const pageCrawler = new PageCrawler(config);
  * const crawlResult = await pageCrawler.crawlPage(page, url);
  *
  * console.log(crawlResult); // { url: 'https://example.com/page1', title: 'Page 1', description: 'This is page 1' }
  * ```
  */
 export class PageCrawler {
-  constructor(private readonly config: Required<WebsiteCrawlerConfig>, private readonly urlProcessor: UrlProcessor) {}
+  constructor(private readonly config: Required<WebsiteCrawlerConfig>) {}
 
   /**
    * Crawls a page and extracts the necessary information.

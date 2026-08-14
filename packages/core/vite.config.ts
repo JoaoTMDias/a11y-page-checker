@@ -1,6 +1,7 @@
 /// <reference types="vitest/globals" />
 import path, { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { builtinModules } from "node:module";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import terser from "@rollup/plugin-terser";
@@ -13,10 +14,11 @@ const { dependencies = {}, devDependencies = {} } = PackageJSON;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const EXTERNAL_DEPENDENCIES = Object.keys({
-  ...dependencies,
-  ...devDependencies,
-});
+const EXTERNAL_DEPENDENCIES = [
+  ...Object.keys({ ...dependencies, ...devDependencies }),
+  ...builtinModules,
+  ...builtinModules.map((module) => `node:${module}`),
+];
 
 type ModuleFormat =
   | "amd"
@@ -65,7 +67,11 @@ export default defineConfig({
       targets: [
         {
           dest: "templates",
-          src: "src/core/report-generator/templates",
+          src: "src/core/report-generator/templates/main.hbs",
+        },
+        {
+          dest: "templates",
+          src: "src/core/report-generator/templates/partials",
         },
       ],
     }),

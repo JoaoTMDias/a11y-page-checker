@@ -25,5 +25,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "examples/node-script"]
+  "include": ["src"],
+  "exclude": ["src/cli"]
 }
