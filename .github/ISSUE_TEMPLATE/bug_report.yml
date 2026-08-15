@@ -1,0 +1,58 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve a11y-page-checker. Do not include secrets, private URLs, or unredacted page content.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest scan plan, command, or code sample that reproduces the problem.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include the commit or version, Node.js version, pnpm version, operating system, and affected package.
+      placeholder: |
+        Revision:
+        Node.js:
+        pnpm:
+        OS:
+        Package:
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Paste relevant logs or normalized results after removing sensitive information.
+      render: text
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I have permission to scan any target used in this report.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
