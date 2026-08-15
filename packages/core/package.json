@@ -21,13 +21,13 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@axe-core/playwright": "^4.10.2",
+    "@axe-core/playwright": "^4.13.0",
     "@jtmdias/js-utilities": "^3.0.0",
     "@playwright/test": "^1.53.0",
     "axe-core": "^4.10.3",
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0",
-    "ink": "^6.0.0",
+    "chalk": "^6.0.0",
+    "commander": "^15.0.0",
+    "ink": "^7.1.1",
     "p-limit": "^7.2.0",
     "picomatch": "^4.0.5",
     "react": "^19.1.0",

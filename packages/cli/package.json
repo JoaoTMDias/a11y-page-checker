@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@a11y-page-checker/core": "workspace:*",
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0"
+    "chalk": "^6.0.0",
+    "commander": "^15.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
