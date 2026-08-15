@@ -38,9 +38,9 @@ describe("generateHtmlReport", () => {
 
     expect(generatedPath).toBe(path.resolve(outputPath, "accessibility-report.html"));
     expect(html).toContain("Total findings");
-    expect(html).toContain("https://example.com/?one=1&amp;two=2");
+    expect(html).toContain("https://example.com/?one&#x3D;1&amp;two&#x3D;2");
     expect(html).toContain("Images must have alternate text");
-    expect(html).toContain("&lt;img src=&quot;logo.png&quot;&gt;");
+    expect(html).toContain("&lt;img src&#x3D;&quot;logo.png&quot;&gt;");
     expect(html).toContain("Navigation failed");
   });
 });
