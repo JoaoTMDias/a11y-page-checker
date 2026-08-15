@@ -1,0 +1,31 @@
+{
+  "name": "@a11y-page-checker/reporter-html",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp -R src/templates dist/templates",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "handlebars": "^4.7.8"
+  },
+  "peerDependencies": {
+    "@a11y-page-checker/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@a11y-page-checker/core": "workspace:*",
+    "@types/node": "^24.0.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -23,12 +23,10 @@
   "dependencies": {
     "@axe-core/playwright": "^4.10.2",
     "@jtmdias/js-utilities": "^3.0.0",
-    "@minify-html/node": "^0.16.4",
     "@playwright/test": "^1.53.0",
     "axe-core": "^4.10.3",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
-    "handlebars": "^4.7.8",
     "ink": "^6.0.0",
     "p-limit": "^7.2.0",
     "picomatch": "^4.0.5",
@@ -45,7 +43,6 @@
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-dts": "^4.5.4",
-    "vite-plugin-static-copy": "^3.0.0",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.2.4"
   }

@@ -1,5 +1,5 @@
 <ol class="pages__list">
-{{#each violations}}
+{{#each urlResults}}
   <li class="pages__list__item">
     <sl-card class="page">
       <h3 class="page__title" slot="header">
@@ -8,7 +8,7 @@
       {{#if error}}
         <p class="error">Error: {{error}}</p>
       {{else}}
-        {{#each violations}}
+        {{#each findings}}
           <sl-details class="page__violation">
             <h4 class="page__violation__title" slot="summary">
               {{#if impact}}
@@ -35,7 +35,7 @@
               <ul class="page__violation__elements">
                 {{#each nodes}}
                   <li>
-                    <pre class="page__violation__code"><code class="syntaxbox">{{escapeHtml html}}</code></pre>
+                    <pre class="page__violation__code"><code class="syntaxbox">{{html}}</code></pre>
                     <pre class="page__violation__solution-container"><p class="page__violation__solution">{{failureSummary}}</p></pre>
                   </li>
                 {{/each}}

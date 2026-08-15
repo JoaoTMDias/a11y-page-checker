@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { PageScanner, ReportGenerator, UrlSource } from "../src/index.ts";
+import { PageScanner, UrlSource } from "../src/index.ts";
 
 describe("core public API", () => {
   it("exports the supported library classes", () => {
     expect(PageScanner).toBeTypeOf("function");
-    expect(ReportGenerator).toBeTypeOf("function");
     expect(UrlSource).toBeTypeOf("function");
   });
 });

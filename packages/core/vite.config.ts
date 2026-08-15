@@ -5,7 +5,6 @@ import { builtinModules } from "node:module";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import terser from "@rollup/plugin-terser";
-import { viteStaticCopy } from "vite-plugin-static-copy";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 import PackageJSON from "./package.json";
@@ -63,18 +62,6 @@ export default defineConfig({
       insertTypesEntry: true,
     }),
     tsconfigPaths(),
-    viteStaticCopy({
-      targets: [
-        {
-          dest: "templates",
-          src: "src/core/report-generator/templates/main.hbs",
-        },
-        {
-          dest: "templates",
-          src: "src/core/report-generator/templates/partials",
-        },
-      ],
-    }),
   ],
   test: {
     coverage: {

@@ -38,9 +38,6 @@ importers:
       '@jtmdias/js-utilities':
         specifier: ^3.0.0
         version: 3.0.0
-      '@minify-html/node':
-        specifier: ^0.16.4
-        version: 0.16.4
       '@playwright/test':
         specifier: ^1.53.0
         version: 1.62.1
@@ -53,9 +50,6 @@ importers:
       commander:
         specifier: ^14.0.0
         version: 14.0.3
-      handlebars:
-        specifier: ^4.7.8
-        version: 4.7.9
       ink:
         specifier: ^6.0.0
         version: 6.8.0(react@19.2.8)
@@ -99,12 +93,28 @@ importers:
       vite-plugin-dts:
         specifier: ^4.5.4
         version: 4.5.4(@types/node@24.13.3)(rollup@4.62.4)(supports-color@8.1.1)(typescript@5.8.3)(vite@6.4.3(@types/node@24.13.3)(terser@5.49.2)(tsx@4.23.12)(yaml@2.9.0))
-      vite-plugin-static-copy:
-        specifier: ^3.0.0
-        version: 3.4.0(vite@6.4.3(@types/node@24.13.3)(terser@5.49.2)(tsx@4.23.12)(yaml@2.9.0))
       vite-tsconfig-paths:
         specifier: ^5.1.4
         version: 5.1.4(supports-color@8.1.1)(typescript@5.8.3)(vite@6.4.3(@types/node@24.13.3)(terser@5.49.2)(tsx@4.23.12)(yaml@2.9.0))
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.3)(supports-color@8.1.1)(terser@5.49.2)(tsx@4.23.12)(yaml@2.9.0)
+
+  packages/reporter-html:
+    dependencies:
+      handlebars:
+        specifier: ^4.7.8
+        version: 4.7.9
+    devDependencies:
+      '@a11y-page-checker/core':
+        specifier: workspace:*
+        version: link:../core
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.3
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
       vitest:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.3)(supports-color@8.1.1)(terser@5.49.2)(tsx@4.23.12)(yaml@2.9.0)

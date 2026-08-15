@@ -23,16 +23,13 @@
         <h1 class="header__title">
             <span class="header__title__name">Accessibility Test Results</span>
         </h1>
-        <time class="header__title__date">
-            <span class="sr-only">Test conducted on</span>{{testDate}}
-        </time>
     </header>
     <main class="container">
         {{> summary}}
         <div class="report">
             <section>
                 <h2 class="report__title">Results</h2>
-                {{> violations}}
+                {{> results}}
             </section>
         </div>
     </main>
