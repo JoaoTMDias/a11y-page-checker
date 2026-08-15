@@ -1,0 +1,23 @@
+{
+  "name": "@a11y-page-checker/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "a11y-page-checker": "./dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@a11y-page-checker/core": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

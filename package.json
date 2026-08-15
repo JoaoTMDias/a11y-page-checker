@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.21.0",
   "scripts": {
-    "build": "pnpm --filter @a11y-page-checker/core run build",
-    "test": "pnpm --filter @a11y-page-checker/core run test"
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test"
   }
 }

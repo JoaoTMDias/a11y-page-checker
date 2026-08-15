@@ -1,5 +1,6 @@
 import { Page } from "@playwright/test";
 import { Result } from "axe-core";
+import type { EventEmitter } from "node:events";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
@@ -83,6 +84,17 @@ export interface ErrorEventPayload {
 
 export interface DoneEventPayload {
   summary: ScanResult["summary"];
+}
+
+export interface ScanOperation extends Promise<ScanResult>, EventEmitter {
+  on(event: "progress", listener: (payload: ProgressEventPayload) => void): this;
+  on(event: "page:done", listener: (payload: PageDoneEventPayload) => void): this;
+  on(event: "error", listener: (payload: ErrorEventPayload) => void): this;
+  on(event: "done", listener: (payload: DoneEventPayload) => void): this;
+  once(event: "progress", listener: (payload: ProgressEventPayload) => void): this;
+  once(event: "page:done", listener: (payload: PageDoneEventPayload) => void): this;
+  once(event: "error", listener: (payload: ErrorEventPayload) => void): this;
+  once(event: "done", listener: (payload: DoneEventPayload) => void): this;
 }
 
 export interface SitemapConfig {
