@@ -12,7 +12,14 @@ interface ScanCommandOptions {
   source?: SourceType;
 }
 
+interface UiServerHandle {
+  url: string;
+}
+
+type StartUiServer = (options?: { port?: number }) => Promise<UiServerHandle>;
+
 interface CliDependencies {
+  startUiServer?: StartUiServer;
   runScan?: typeof scan;
   stderr?: Pick<NodeJS.WriteStream, "write">;
   stdout?: Pick<NodeJS.WriteStream, "write">;
@@ -36,6 +43,21 @@ export function createProgram(dependencies: CliDependencies = {}): Command {
   const program = new Command();
 
   program.name("a11y-page-checker").description("Run accessibility scans from the command line");
+  program
+    .command("ui")
+    .description("Start the local accessibility dashboard")
+    .option("--port <port>", "Local port", "4174")
+    .action(async ({ port }: { port: string }) => {
+      const parsedPort = Number.parseInt(port, 10);
+      if (!Number.isInteger(parsedPort) || parsedPort < 1 || parsedPort > 65535) {
+        throw new Error(`Invalid port: ${port}`);
+      }
+      const startUiServer = dependencies.startUiServer
+        ?? (await import("@a11y-page-checker/ui")).startUiServer;
+      const server = await startUiServer({ port: parsedPort });
+      stdout.write(`A11y Page Checker UI: ${server.url}\n`);
+    });
+
   program
     .command("scan <url-or-sitemap>")
     .description("Scan a URL or sitemap")

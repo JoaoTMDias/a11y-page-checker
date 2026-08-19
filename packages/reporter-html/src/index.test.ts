@@ -5,7 +5,7 @@ import path from "node:path";
 import type { ScanResult } from "@a11y-page-checker/core";
 import { describe, expect, it } from "vitest";
 
-import { generateHtmlReport } from "./index.js";
+import { generateHtmlReport, renderHtmlReport } from "./index.js";
 
 const result: ScanResult = {
   summary: { duration: 1250, pagesScanned: 2, totalFindings: 1 },
@@ -29,6 +29,13 @@ const result: ScanResult = {
 };
 
 describe("generateHtmlReport", () => {
+  it("renders escaped HTML without writing a file", async () => {
+    const html = await renderHtmlReport(result);
+
+    expect(html).toContain("Total findings");
+    expect(html).toContain("&lt;img src&#x3D;&quot;logo.png&quot;&gt;");
+  });
+
   it("writes a report from a normalized ScanResult and returns its absolute path", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "reporter-html-"));
     const outputPath = path.join(directory, "nested");

@@ -13,7 +13,7 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Development setup
 
-You need Node.js 20 or newer and pnpm 11.
+You need Node.js 22.13 or newer and pnpm 11.
 
 ```sh
 git clone https://github.com/JoaoTMDias/a11y-page-checker.git

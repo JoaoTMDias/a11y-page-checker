@@ -14,19 +14,19 @@ const FENCE_START = /^\s*(`{3,}|~{3,})\s*(json|ya?ml)\s*$/i;
 export class MarkdownParser {
   static async parse(filePath: string): Promise<ScanPlan> {
     const markdown = await readFile(filePath, "utf8");
-    return this.parseMarkdown(markdown, filePath);
+    return this.parseText(markdown, filePath);
   }
 
-  private static parseMarkdown(markdown: string, filePath: string): ScanPlan {
+  static parseText(markdown: string, sourceName = "Markdown scan plan"): ScanPlan {
     const frontMatterMatch = markdown.match(FRONT_MATTER);
     const settings = frontMatterMatch
-      ? this.parseObject(frontMatterMatch[1] ?? "", "front matter", filePath)
+      ? this.parseObject(frontMatterMatch[1] ?? "", "front matter", sourceName)
       : {};
     const body = frontMatterMatch ? markdown.slice(frontMatterMatch[0].length) : markdown;
-    const targets = this.parseTargets(body, filePath);
+    const targets = this.parseTargets(body, sourceName);
     const source = settings.source === undefined
       ? { targets: targets.map((target) => target.url), type: "urls" as const }
-      : this.parseSource(settings.source, filePath);
+      : this.parseSource(settings.source, sourceName);
 
     return {
       ...settings,

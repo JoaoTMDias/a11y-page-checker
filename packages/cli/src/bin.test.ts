@@ -38,6 +38,17 @@ function createOperation(result: ScanResult): ScanOperation {
 }
 
 describe("CLI scan command", () => {
+  it("starts the local UI on the requested port", async () => {
+    const stdout = createOutput();
+    const startUiServer = vi.fn(async () => ({ url: "http://127.0.0.1:4321" }));
+    const program = createProgram({ startUiServer, stdout: stdout.stream });
+
+    await program.parseAsync(["node", "a11y-page-checker", "ui", "--port", "4321"]);
+
+    expect(startUiServer).toHaveBeenCalledWith({ port: 4321 });
+    expect(stdout.value()).toContain("http://127.0.0.1:4321");
+  });
+
   it("infers sitemap sources and respects explicit source overrides", () => {
     expect(createScanPlan("https://example.com/sitemap.xml")).toEqual({
       source: { type: "sitemap", url: "https://example.com/sitemap.xml" },
