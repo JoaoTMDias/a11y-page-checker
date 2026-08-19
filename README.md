@@ -1,6 +1,6 @@
 # a11y-page-checker
 
-Automated accessibility scanning for URLs, sitemaps, crawled sites, and Markdown test plans. The project combines Playwright and axe-core with a normalized TypeScript API, a command-line interface, an HTML reporter, and a Model Context Protocol (MCP) server for AI tools.
+Automated accessibility scanning for URLs, sitemaps, crawled sites, and Markdown test plans. The project combines Playwright and axe-core with a normalized TypeScript API, a command-line interface, a local web dashboard, an HTML reporter, and a Model Context Protocol (MCP) server for AI tools.
 
 > [!IMPORTANT]
 > This project is under active development and its packages are not currently published to npm. Install and run it from source while the public API stabilizes.
@@ -9,10 +9,11 @@ Automated accessibility scanning for URLs, sitemaps, crawled sites, and Markdown
 
 - Scan explicit URLs, remote XML or JSON sitemaps, or same-origin crawls.
 - Normalize axe-core violations into a stable `ScanResult` contract.
-- Define repeatable audits and browser interactions in Markdown.
+- Define repeatable audit targets and interaction metadata in Markdown.
 - Observe scan progress through typed lifecycle events.
 - Produce deterministic, escaped HTML reports.
-- Run audits from a CLI or expose them to LLM clients over MCP stdio.
+- Run audits from a CLI, manage them in a local web dashboard, or expose them to LLM clients over MCP stdio.
+- Queue scans, follow live progress, filter findings, reopen history, and export JSON or HTML reports.
 - Continue scanning independent pages when one target fails.
 
 ## Requirements
@@ -47,7 +48,21 @@ Start the local dashboard after building the workspace:
 node packages/cli/dist/bin.js ui
 ```
 
-The dashboard binds to `127.0.0.1:4174`, queues scans locally, and stores history in SQLite under the current user's application directory.
+The dashboard binds only to `127.0.0.1:4174`, runs one scan at a time with a FIFO queue, and stores history in `~/.a11y-page-checker/scans.sqlite`. It supports crawl, sitemap, and uploaded Markdown plans, live progress, finding filters, and JSON or HTML downloads. It does not open a browser automatically.
+
+Use another port when needed:
+
+```sh
+node packages/cli/dist/bin.js ui --port 4321
+```
+
+For frontend and backend development with live reload:
+
+```sh
+pnpm --filter @a11y-page-checker/ui dev
+```
+
+The standalone UI server also accepts `A11Y_UI_PORT` and `A11Y_UI_DATABASE`. The application is local-first: keep it bound to loopback, and confirm that you are authorised before scanning private-network targets.
 
 > [!NOTE]
 > Only scan sites you own or have permission to test. Crawls can generate meaningful traffic, especially with higher depth, page, or concurrency limits.
@@ -88,7 +103,7 @@ Results include a summary and an ordered result for every attempted URL. Page-le
 
 ## Markdown test plans
 
-Markdown plans combine human-readable audit notes with structured targets and optional interaction scenarios. Only unchecked tasks containing HTTP(S) URLs are treated as targets.
+Markdown plans combine human-readable audit notes with structured targets and optional interaction metadata. Only unchecked tasks containing HTTP(S) URLs are treated as targets. The parser validates action metadata, but the current scanner does not execute it.
 
 ````md
 ---
@@ -125,7 +140,7 @@ const plan = await MarkdownParser.parse("./audit-plan.md");
 const result = await scan(plan);
 ```
 
-The full syntax is defined in [RFC 002](docs/rfc/002-scan-plan-and-markdown-spec.md), with a working example in [examples/test-plans/sample-audit.md](examples/test-plans/sample-audit.md).
+Use `MarkdownParser.parseText(markdownContent, "audit-plan.md")` for in-memory content such as a validated upload. The full syntax and current execution limits are documented in [Scan plans and Markdown](docs/scan-plans.md), with a working example in [examples/test-plans/sample-audit.md](examples/test-plans/sample-audit.md).
 
 ## MCP server
 
@@ -156,10 +171,14 @@ The MCP process inherits the filesystem and network permissions of the client th
 The reporter consumes the same normalized result contract:
 
 ```ts
-import { generateHtmlReport } from "@a11y-page-checker/reporter-html";
+import {
+  generateHtmlReport,
+  renderHtmlReport,
+} from "@a11y-page-checker/reporter-html";
 
 const reportPath = await generateHtmlReport(result, "./reports");
-console.log(reportPath);
+const html = await renderHtmlReport(result);
+console.log(reportPath, html.length);
 ```
 
 ## Workspace structure
@@ -170,6 +189,7 @@ console.log(reportPath);
 | `packages/cli`           | Terminal adapter and output formatting                                                     |
 | `packages/mcp`           | MCP stdio server and audit tools                                                           |
 | `packages/reporter-html` | Static HTML report generation                                                              |
+| `packages/ui`            | Local React dashboard, Fastify API, FIFO scan queue, SSE, and SQLite history                |
 | `docs`                   | Product requirements, RFCs, contracts, and roadmap                                         |
 | `examples`               | Example plans and integrations                                                             |
 
@@ -188,6 +208,9 @@ Use package filters for faster iteration:
 pnpm --filter @a11y-page-checker/core test
 pnpm --filter @a11y-page-checker/mcp test
 pnpm --filter @a11y-page-checker/reporter-html build
+pnpm --filter @a11y-page-checker/ui test
+pnpm --filter @a11y-page-checker/ui build
+pnpm --filter @a11y-page-checker/ui test:e2e
 ```
 
 Tests use Vitest and mock browser and network boundaries where appropriate. Please add focused success and failure coverage for behavior changes, preserve strict TypeScript and native ESM conventions, and avoid editing generated `dist` files.
@@ -208,9 +231,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development and pull-re
 
 Please do not disclose vulnerabilities in a public issue. Follow the private reporting process in [SECURITY.md](SECURITY.md).
 
-## Roadmap
+## Documentation
 
-See the [development roadmap](docs/Roadmap.md) and [MCP and UI platform PRD](docs/prd/mcp-and-ui-platform.md). Roadmap items describe direction, not commitments or currently available functionality.
+See the [documentation index](docs/README.md) for the current architecture, scan-plan syntax, local dashboard, and public contracts.
 
 ## License
 
