@@ -17,7 +17,7 @@ Automated accessibility scanning for URLs, sitemaps, crawled sites, and Markdown
 
 ## Requirements
 
-- Node.js 20 or newer
+- Node.js 22.13 or newer
 - [pnpm](https://pnpm.io/) 11 (the repository pins the expected version)
 - A Chromium browser installed for Playwright
 
