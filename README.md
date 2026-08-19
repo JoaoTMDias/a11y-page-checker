@@ -45,7 +45,7 @@ Use `--format json` for machine-readable output. URLs ending in `.xml` or `.json
 Start the local dashboard after building the workspace:
 
 ```sh
-node packages/cli/dist/bin.js ui
+pnpm ui
 ```
 
 The dashboard binds only to `127.0.0.1:4174`, runs one scan at a time with a FIFO queue, and stores history in `~/.a11y-page-checker/scans.sqlite`. It supports crawl, sitemap, and uploaded Markdown plans, live progress, finding filters, and JSON or HTML downloads. It does not open a browser automatically.
@@ -53,7 +53,7 @@ The dashboard binds only to `127.0.0.1:4174`, runs one scan at a time with a FIF
 Use another port when needed:
 
 ```sh
-node packages/cli/dist/bin.js ui --port 4321
+pnpm ui --port 4321
 ```
 
 For frontend and backend development with live reload:
