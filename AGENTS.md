@@ -12,7 +12,7 @@ This is a pnpm workspace monorepo for an accessibility scanning tool:
 - `docs/rfc` — architectural proposals and feature specifications.
 - `examples/test-plans` — representative user-authored Markdown scan plans.
 
-The project requires Node.js 20 or newer, native ESM, strict TypeScript, and pnpm workspaces. Use `workspace:*` for internal package dependencies.
+The project requires Node.js 22.13 or newer, native ESM, strict TypeScript, and pnpm workspaces. Use `workspace:*` for internal package dependencies.
 
 ## Source of Truth
 
@@ -20,7 +20,7 @@ Before changing behavior, inspect the nearest implementation and tests. For publ
 
 - `packages/core/src/types.ts` for the canonical public data contracts.
 - `packages/core/src/index.ts` and `packages/core/test/public-api.test.ts` for the exported API.
-- `docs/rfc/002-scan-plan-and-markdown-spec.md` for `ScanPlan` and Markdown plan semantics.
+- `docs/scan-plans.md` for `ScanPlan` and Markdown plan semantics.
 - `docs/public-contracts.md` for documented public result contracts.
 
 If documentation and executable types disagree, do not silently invent a third interpretation. Preserve the current public type contract and call out the discrepancy, or update all affected documentation, types, implementation, and tests when the task authorizes an interface change.

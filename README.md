@@ -9,7 +9,7 @@ Automated accessibility scanning for URLs, sitemaps, crawled sites, and Markdown
 
 - Scan explicit URLs, remote XML or JSON sitemaps, or same-origin crawls.
 - Normalize axe-core violations into a stable `ScanResult` contract.
-- Define repeatable audits and browser interactions in Markdown.
+- Define repeatable audit targets and interaction metadata in Markdown.
 - Observe scan progress through typed lifecycle events.
 - Produce deterministic, escaped HTML reports.
 - Run audits from a CLI, manage them in a local web dashboard, or expose them to LLM clients over MCP stdio.
@@ -103,7 +103,7 @@ Results include a summary and an ordered result for every attempted URL. Page-le
 
 ## Markdown test plans
 
-Markdown plans combine human-readable audit notes with structured targets and optional interaction scenarios. Only unchecked tasks containing HTTP(S) URLs are treated as targets.
+Markdown plans combine human-readable audit notes with structured targets and optional interaction metadata. Only unchecked tasks containing HTTP(S) URLs are treated as targets. The parser validates action metadata, but the current scanner does not execute it.
 
 ````md
 ---
@@ -137,11 +137,10 @@ Parse and execute a plan through the core API:
 import { MarkdownParser, scan } from "@a11y-page-checker/core";
 
 const plan = await MarkdownParser.parse("./audit-plan.md");
-const uploadedPlan = MarkdownParser.parseText(markdownContent, "audit-plan.md");
 const result = await scan(plan);
 ```
 
-The full syntax is defined in [RFC 002](docs/rfc/002-scan-plan-and-markdown-spec.md), with a working example in [examples/test-plans/sample-audit.md](examples/test-plans/sample-audit.md).
+Use `MarkdownParser.parseText(markdownContent, "audit-plan.md")` for in-memory content such as a validated upload. The full syntax and current execution limits are documented in [Scan plans and Markdown](docs/scan-plans.md), with a working example in [examples/test-plans/sample-audit.md](examples/test-plans/sample-audit.md).
 
 ## MCP server
 
@@ -232,9 +231,9 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) for the complete development and pull-re
 
 Please do not disclose vulnerabilities in a public issue. Follow the private reporting process in [SECURITY.md](SECURITY.md).
 
-## Roadmap
+## Documentation
 
-See the [development roadmap](docs/Roadmap.md) and [MCP and UI platform PRD](docs/prd/mcp-and-ui-platform.md). Roadmap items describe direction, not commitments or currently available functionality.
+See the [documentation index](docs/README.md) for the current architecture, scan-plan syntax, local dashboard, and public contracts.
 
 ## License
 

@@ -108,17 +108,20 @@ const plan: ScanPlan = {
 const result = await scan(plan);
 ```
 
-`actions` and per-target `rules` are represented in the current public contract. Consumers should note that execution support may evolve independently; consult the relevant implementation and RFC before relying on them as an engine guarantee.
+`actions` and per-target `rules` are represented in the current public contract and preserved as metadata. The current scan engine does not execute actions or apply per-target rule overrides; consumers must not rely on them as scan preconditions or execution controls.
 
 ## Markdown Plans
 
-`MarkdownParser.parse` reads a Markdown test-plan file asynchronously and returns a validated `ScanPlan`:
+`MarkdownParser.parse` reads a Markdown test-plan file asynchronously. `MarkdownParser.parseText` parses in-memory content synchronously without accepting a filesystem path:
 
 ```typescript
 import { MarkdownParser } from "@a11y-page-checker/core";
 
-const plan = await MarkdownParser.parse("./audit-plan.md");
+const filePlan = await MarkdownParser.parse("./audit-plan.md");
+const uploadedPlan = MarkdownParser.parseText(markdown, "uploaded-plan.md");
 ```
+
+The optional source name is included in validation errors and defaults to `Markdown scan plan`.
 
 Front matter supplies top-level `ScanPlan` settings. When `source` is omitted, the parser derives a `urls` source from the targets found in the document.
 
@@ -146,7 +149,7 @@ actions:
 ```
 ````
 
-Malformed front matter, malformed scenario data, unclosed scenario fences, and invalid actions reject with an `Error` containing the source file path.
+Malformed front matter, malformed scenario data, unclosed scenario fences, and invalid actions reject with an `Error` containing the file path or source name supplied by the caller.
 
 ## Findings and Results
 
