@@ -12,6 +12,17 @@ export async function generateHtmlReport(
   result: ScanResult,
   outputPath: string,
 ): Promise<string> {
+  const html = await renderHtmlReport(result);
+  const reportPath = path.resolve(outputPath, "accessibility-report.html");
+
+  await mkdir(path.dirname(reportPath), { recursive: true });
+  await writeFile(reportPath, html, "utf8");
+
+  return reportPath;
+}
+
+/** Render a deterministic HTML report without writing to the filesystem. */
+export async function renderHtmlReport(result: ScanResult): Promise<string> {
   const [main, summary, results, styles] = await Promise.all([
     readTemplate("main.hbs"),
     readTemplate("partials/summary.hbs"),
@@ -28,12 +39,7 @@ export async function generateHtmlReport(
     ...result,
     pagesWithFindings: result.urlResults.filter(({ findings }) => findings.length > 0).length,
   });
-  const reportPath = path.resolve(outputPath, "accessibility-report.html");
-
-  await mkdir(path.dirname(reportPath), { recursive: true });
-  await writeFile(reportPath, html, "utf8");
-
-  return reportPath;
+  return html;
 }
 
 async function readTemplate(relativePath: string): Promise<string> {

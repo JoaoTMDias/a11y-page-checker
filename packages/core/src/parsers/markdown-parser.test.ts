@@ -20,6 +20,16 @@ afterEach(async () => {
 });
 
 describe("MarkdownParser", () => {
+  it("parses Markdown text without requiring filesystem access", () => {
+    expect(MarkdownParser.parseText("- [ ] Home: https://example.com/", "uploaded-plan.md")).toEqual({
+      source: { targets: ["https://example.com/"], type: "urls" },
+      targets: [{ name: "Home", url: "https://example.com/" }],
+    });
+
+    expect(() => MarkdownParser.parseText("---\nsource: [\n---\n", "uploaded-plan.md"))
+      .toThrow("Invalid front matter in uploaded-plan.md");
+  });
+
   it("maps YAML front matter and unchecked URL tasks to a scan plan", async () => {
     const filePath = await writePlan(`---
 name: Storefront audit

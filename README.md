@@ -41,6 +41,14 @@ node packages/cli/dist/bin.js scan https://example.com --format table
 
 Use `--format json` for machine-readable output. URLs ending in `.xml` or `.json` are treated as sitemaps by default; use `--source crawl` or `--source sitemap` to override detection.
 
+Start the local dashboard after building the workspace:
+
+```sh
+node packages/cli/dist/bin.js ui
+```
+
+The dashboard binds to `127.0.0.1:4174`, queues scans locally, and stores history in SQLite under the current user's application directory.
+
 > [!NOTE]
 > Only scan sites you own or have permission to test. Crawls can generate meaningful traffic, especially with higher depth, page, or concurrency limits.
 

@@ -11,3 +11,8 @@ oclif.manifest.json
 /examples/**/output/**/*
 
 yarn.lock
+
+/.a11y-page-checker
+/packages/ui/*.sqlite*
+/packages/ui/test-results
+/packages/ui/playwright-report

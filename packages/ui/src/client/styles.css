@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: .625rem; --background: oklch(.985 0 0); --foreground: oklch(.145 0 0);
+  --card: oklch(1 0 0); --card-foreground: oklch(.145 0 0); --popover: oklch(1 0 0);
+  --popover-foreground: oklch(.145 0 0); --primary: oklch(.45 .16 160); --primary-foreground: oklch(.985 0 0);
+  --secondary: oklch(.94 0 0); --secondary-foreground: oklch(.205 0 0); --muted: oklch(.955 0 0);
+  --muted-foreground: oklch(.42 0 0); --accent: oklch(.94 .02 160); --accent-foreground: oklch(.205 0 0);
+  --destructive: oklch(.54 .21 27); --border: oklch(.88 0 0); --input: oklch(.88 0 0); --ring: oklch(.5 .15 160);
+}
+.dark {
+  --background: oklch(.145 0 0); --foreground: oklch(.97 0 0); --card: oklch(.19 0 0);
+  --card-foreground: oklch(.97 0 0); --popover: oklch(.205 0 0); --popover-foreground: oklch(.97 0 0);
+  --primary: oklch(.72 .17 160); --primary-foreground: oklch(.16 .03 160); --secondary: oklch(.27 0 0);
+  --secondary-foreground: oklch(.97 0 0); --muted: oklch(.25 0 0); --muted-foreground: oklch(.72 0 0);
+  --accent: oklch(.28 .03 160); --accent-foreground: oklch(.97 0 0); --destructive: oklch(.65 .2 25);
+  --border: oklch(1 0 0 / 12%); --input: oklch(1 0 0 / 16%); --ring: oklch(.7 .16 160);
+}
+@theme inline {
+  --font-sans: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif; --font-mono: "Geist Mono", ui-monospace, monospace;
+  --color-background: var(--background); --color-foreground: var(--foreground); --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground); --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground); --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground); --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground); --color-destructive: var(--destructive);
+  --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * .75); --radius-md: calc(var(--radius) * .875); --radius-lg: var(--radius); --radius-xl: calc(var(--radius) * 1.5);
+}
+@layer base { * { @apply border-border; } body { @apply bg-background text-foreground antialiased; margin: 0; min-width: 320px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+.finding-card { content-visibility: auto; contain-intrinsic-size: 280px; }
