@@ -7,9 +7,10 @@ Guidance for coding agents working in this repository. Prefer small, contract-pr
 This is a pnpm workspace monorepo for an accessibility scanning tool:
 
 - `packages/core` — public scanning API, URL discovery, Markdown plan parsing, Playwright/axe execution, and result normalization.
-- `packages/cli` — command-line adapter around `@a11y-page-checker/core`.
+- `packages/cli` — command-line adapter, scan output, and local-dashboard startup.
 - `packages/reporter-html` — HTML rendering for core `ScanResult` data.
-- `docs/rfc` — architectural proposals and feature specifications.
+- `packages/mcp` — MCP stdio adapter for URL and Markdown-plan audits.
+- `packages/ui` — local React/Fastify dashboard, scan queue, and SQLite history.
 - `examples/test-plans` — representative user-authored Markdown scan plans.
 
 The project requires Node.js 22.13 or newer, native ESM, strict TypeScript, and pnpm workspaces. Use `workspace:*` for internal package dependencies.
@@ -19,7 +20,7 @@ The project requires Node.js 22.13 or newer, native ESM, strict TypeScript, and 
 Before changing behavior, inspect the nearest implementation and tests. For public APIs and scan-plan work, also consult:
 
 - `packages/core/src/types.ts` for the canonical public data contracts.
-- `packages/core/src/index.ts` and `packages/core/test/public-api.test.ts` for the exported API.
+- `packages/core/src/index.ts`, `packages/core/package.json`, `packages/core/src/index.test.ts`, and `packages/core/test/public-api.test.ts` for runtime exports, package entry points, scan behavior, and public API coverage.
 - `docs/scan-plans.md` for `ScanPlan` and Markdown plan semantics.
 - `docs/public-contracts.md` for documented public result contracts.
 
@@ -61,16 +62,18 @@ If documentation and executable types disagree, do not silently invent a third i
 - Prefer focused functions with explicit validation at file, network, CLI, and parsing boundaries.
 - Preserve errors with useful context such as the file path, URL, source type, or action index.
 - Keep dependencies package-local. Add a dependency only when the platform or an existing dependency cannot reasonably provide the behavior.
+- Use `workspace:*` for dependencies on another workspace package.
 - Do not edit generated `dist` files or lockfile entries by hand.
 - Do not reformat or modify unrelated files. The worktree may already contain user changes.
 
 For Markdown plans specifically:
 
-- Front matter maps to the public `ScanPlan` contract.
+- YAML front matter maps to the public `ScanPlan` contract; when `source` is absent, derive an ordered `urls` source from parsed targets.
 - Only unchecked task items (`- [ ]`) are URL candidates; checked tasks are ignored.
 - Accept plain HTTP(S) URLs and Markdown links without treating arbitrary prose as a target.
 - Scenario code blocks use JSON or YAML and must validate every `DOMAction` before returning a plan.
-- Keep parsing deterministic, preserve document order, and provide file-specific errors for malformed input.
+- Keep parsing deterministic, preserve document order, and include the file path or supplied source name in malformed-input errors.
+- Preserve the documented current limits: `files` sources, target actions, and per-target rules are represented in public types but are not executed by the scan engine.
 
 ## Testing
 
@@ -103,9 +106,9 @@ Use `pnpm build` when a change affects shared contracts, package exports, or mor
 
 Before considering work complete:
 
-1. Confirm the implementation matches the relevant RFC and public TypeScript contracts.
+1. Confirm the implementation matches the public TypeScript contracts and their documentation.
 2. Confirm core runtime code remains silent and resource-safe.
 3. Add focused tests, including failure cases where appropriate.
 4. Verify intended exports and cross-package consumers after public API changes.
-5. Run affected package tests/builds and then `pnpm test`.
+5. Run affected package tests and builds, then `pnpm test`; use `pnpm build` for shared contracts, exports, or multi-package changes.
 6. Review the diff for generated files, unrelated edits, secrets, and accidental formatting churn.
