@@ -17,7 +17,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "handlebars": "^4.7.8"
+    "handlebars": "^4.7.10"
   },
   "peerDependencies": {
     "@a11y-page-checker/core": "workspace:*"
